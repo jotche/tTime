@@ -1,0 +1,49 @@
+<RCC>
+    <qresource prefix="/fonts">
+        <file alias="stalker2">Resources/fonts/stalker.ttf</file>
+        <file alias="lovelt">Resources/fonts/lovelt.ttf</file>
+        <file alias="hypewriter">Resources/fonts/hypewriter.ttf</file>
+        <file alias="io">Resources/fonts/io.ttf</file>
+        <file alias="sansation_bold">Resources/fonts/Sansation_Bold.ttf</file>
+        <file alias="sansation_light">Resources/fonts/Sansation_Light.ttf</file>
+        <file alias="sansation_regular">Resources/fonts/Sansation_Regular.ttf</file>
+        <file alias="tit22l1">Resources/fonts/TitilliumText22L001.otf</file>
+        <file>Resources/fonts/TitilliumText22L002.otf</file>
+        <file>Resources/fonts/TitilliumText22L003.otf</file>
+        <file alias="tit22l4">Resources/fonts/TitilliumText22L004.otf</file>
+        <file>Resources/fonts/TitilliumText22L005.otf</file>
+        <file>Resources/fonts/TitilliumText22L006.otf</file>
+        <file alias="telegrama">Resources/fonts/telegrama_render.otf</file>
+        <file alias="satellite">Resources/fonts/Satellite.otf</file>
+        <file alias="GeosansLight">Resources/fonts/GeosansLight.ttf</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file alias="pastel-pause_1">Resources/icons01/control-pause-blue.png</file>
+        <file alias="pastel-play_1">Resources/icons01/control-play-blue.png</file>
+        <file alias="pastel-repeat_1">Resources/icons01/control-repeat-blue.png</file>
+        <file alias="pastel-stop_1">Resources/icons01/control-stop-blue.png</file>
+        <file alias="alarm">Resources/icons/alarm.ico</file>
+        <file alias="anchor_1">Resources/icons/anchor.ico</file>
+        <file alias="down_1">Resources/icons/down.ico</file>
+        <file alias="exit_1">Resources/icons/stop-error.ico</file>
+        <file alias="anchor">Resources/icons01/flag1_16.png</file>
+        <file alias="down">Resources/icons01/arrow_down_16.png</file>
+        <file alias="exit">Resources/icons01/delete_16.png</file>
+        <file alias="pause_1">Resources/icons/pause.ico</file>
+        <file alias="play_1">Resources/icons/play.ico</file>
+        <file alias="stop_1">Resources/icons/play stop.ico</file>
+        <file alias="refresh_1">Resources/icons/refresh.ico</file>
+        <file alias="pastel-repeat">Resources/icons01/reload_16.png</file>
+        <file alias="pastel-play">Resources/icons01/play_16.png</file>
+        <file alias="pastel-pause">Resources/icons01/video_pause_16.png</file>
+        <file alias="pastel-stop">Resources/icons01/video_stop_16.png</file>
+    </qresource>
+    <qresource prefix="/images">
+        <file alias="tree02">Resources/images/tree02.png</file>
+        <file alias="tree">Resources/images/tree01.png</file>
+        <file alias="flowers">Resources/images/flowers.png</file>
+    </qresource>
+    <qresource prefix="/sounds">
+        <file alias="submarine">Resources/sounds/submarine1.wav</file>
+    </qresource>
+</RCC>
