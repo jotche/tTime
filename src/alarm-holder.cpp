@@ -13,7 +13,7 @@ AlarmHolder::~AlarmHolder(void)
 {
 	delete teaAlarm;
     alarmDisplay->close();
-    delete alarmDisplay;
+    //delete alarmDisplay;
 }
 
 TeaAlarm* AlarmHolder::alarm(void)
