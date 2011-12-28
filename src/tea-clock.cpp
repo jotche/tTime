@@ -6,7 +6,6 @@
 TeaClock::TeaClock(QWidget *parent, Qt::WFlags flags)
 	: QWidget(parent, flags)
 {
-    //test
 	ui.setupUi(this);
 
 	createActions();
