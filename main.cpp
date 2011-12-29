@@ -14,6 +14,7 @@ using namespace std;
 int main(int argc, char *argv[])
 {
 
+//test
         //QApplication::setStyle(new QCleanlooksStyle());
         QApplication a(argc, argv);
 
