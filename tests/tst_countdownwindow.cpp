@@ -111,7 +111,7 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(&window));
 
         const auto at = [&](const char *name) {
-            QWidget *child = window.findChild<QWidget *>(QLatin1String(name));
+            auto *child = window.findChild<QWidget *>(QLatin1String(name));
             return child ? QRect(child->mapTo(&window, QPoint(0, 0)), child->size()) : QRect();
         };
         const QRect play = at("playPauseButton");

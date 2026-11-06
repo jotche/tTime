@@ -174,8 +174,7 @@ void CountdownWindow::mousePressEvent(QMouseEvent *event)
     // Prefer native move/resize (works with frameless windows and high-DPI).
     QWindow *window = windowHandle();
     const bool resize = event->modifiers().testFlag(Qt::ControlModifier);
-    const bool handled
-        = window && (resize ? window->startSystemResize(Qt::RightEdge) : window->startSystemMove());
+    const bool handled = window && (resize ? window->startSystemResize(Qt::RightEdge) : window->startSystemMove());
 
     m_manualDrag = !handled && !resize;
     if (m_manualDrag) {
@@ -204,8 +203,8 @@ void CountdownWindow::resizeEvent(QResizeEvent *event)
 void CountdownWindow::fitHeightToContent()
 {
     const QLayout *content = layout();
-    const int height = content->hasHeightForWidth() ? content->totalHeightForWidth(width())
-                                                    : content->totalSizeHint().height();
+    const int height
+        = content->hasHeightForWidth() ? content->totalHeightForWidth(width()) : content->totalSizeHint().height();
     if (minimumHeight() != height || maximumHeight() != height) {
         setFixedHeight(height);
     }
