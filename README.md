@@ -128,7 +128,7 @@ message-weight=300
 ; font sizes in points (6-96): countdown, message below it, message in the "Time's Up" window
 countdown-size=18
 message-size=13
-time-up-message-size=20
+time-up-message-size=13
 ; look of the windows and icon: blue, sage, prussian-blue, hibiscus-red,
 ; jade-green, forest-green, pine-green or hunter-green
 theme=blue

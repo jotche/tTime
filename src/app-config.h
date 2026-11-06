@@ -1,5 +1,6 @@
 #pragma once
 
+#include "countdown-font.h"
 #include "theme.h"
 
 #include <QFont>
@@ -15,7 +16,7 @@ struct AppConfig
     Theme theme;
     QFont countdownFont;
     QFont messageFont; // the alarm message below the countdown
-    int timeUpMessagePointSize = 20; // the alarm message in the "Time's up" window
+    int timeUpMessagePointSize = defaultTimeUpMessagePointSize; // the alarm message in the "Time's up" window
     QUrl alarmSound; // empty = silent
     bool animations = true; // swaying tree and ringing tray icon in the "Time's up" window
 

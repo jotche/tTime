@@ -16,7 +16,7 @@ class AppSettings;
 //   message-weight=300
 //   countdown-size=18           (point sizes, 6-96)
 //   message-size=13
-//   time-up-message-size=20     (the message in the "Time's up" window, in the message font)
+//   time-up-message-size=13     (the message in the "Time's up" window, in the message font)
 //
 // The defaults are also shipped as tTime.ini next to tTime.exe (src/tTime.ini);
 // the user's %APPDATA%\tTime\tTime.ini overrides them.
@@ -30,7 +30,7 @@ inline constexpr const char *defaultMessageFontId = "outfit";
 inline constexpr int defaultMessageWeight = 300;
 inline constexpr int defaultCountdownPointSize = 18;
 inline constexpr int defaultMessagePointSize = 13;
-inline constexpr int defaultTimeUpMessagePointSize = 20;
+inline constexpr int defaultTimeUpMessagePointSize = 13;
 inline constexpr int minFontPointSize = 6;
 inline constexpr int maxFontPointSize = 96;
 
