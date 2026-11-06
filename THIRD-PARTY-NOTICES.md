@@ -5,52 +5,73 @@ tTime itself is licensed under the MIT License (see `LICENSE`). A tTime distribu
 installed in the `licenses` folder next to `bin` (Windows) or next to `tTime.app` in the DMG
 (macOS).
 
-## Qt 6 (The Qt Company Ltd. and other contributors)
+## Windows: `tTime-<version>-windows-x64.zip` (static build)
 
-- **Modules shipped:** Qt Core, Gui, Widgets, Multimedia and Network as DLLs in `bin`, plus
-  plugins in `plugins` (platforms, styles, imageformats, multimedia).
+The Windows release is built in the MSYS2 CLANG64 environment with the
+`clang64-release-static` preset. Everything below is linked into `tTime.exe`; the ZIP contains
+no DLLs. The licence files MSYS2 installs for each library are in `licenses/msys2/<package>`.
+
+### Qt 6 (The Qt Company Ltd. and other contributors)
+
+- **Linked in:** Qt Core, Gui, Widgets, Multimedia and Network, and the Qt plugins tTime uses
+  (Windows platform and style, ICO images, Windows media backend). No FFmpeg.
 - **Licence:** GNU Lesser General Public License v3 (`licenses/LGPL-3.0.txt`), which builds on
   the GNU General Public License v3 (`licenses/GPL-3.0.txt`).
-- **Source code:** Qt's source code is available from <https://download.qt.io/> and
-  <https://code.qt.io/>. tTime uses the unmodified Qt 6.12.0 community release.
-- **Replacing Qt:** the standard tTime distribution links Qt dynamically. You can replace the
-  Qt DLLs and plugins in it with your own build of the same Qt version.
+- **Source code:** Qt 6.12.0 as packaged by MSYS2 (`mingw-w64-clang-x86_64-qt6-static`). The
+  Qt sources are available from <https://download.qt.io/> and <https://code.qt.io/>; MSYS2's
+  build recipe and patches are at <https://github.com/msys2/MINGW-packages>
+  (`mingw-w64-qt6-static`).
+- **Using a modified Qt** (LGPL v3 section 4): tTime's complete source code is available under
+  the MIT License. Building it with the `clang64-release-static` preset against your own static
+  Qt (put it first in `CMAKE_PREFIX_PATH`) relinks `tTime.exe` with that Qt.
 
-### Static build (`tTime-<version>-windows-x64-static.zip`)
+### Libraries linked into `tTime.exe`
 
-The static build (`mingw-release-static` preset) has Qt Core, Gui, Widgets, Multimedia and
-Network, and the Qt plugins it uses, linked into `tTime.exe`, so it ships no Qt DLLs. Qt is
-still under the LGPL v3 there. To use a modified Qt with it, as section 4 of the LGPL v3
-allows: tTime's complete source code is available under the MIT License, and
-`scripts/build-static-qt.ps1` plus the `mingw-release-static` preset rebuild and relink
-`tTime.exe` against your own static Qt build. The Qt in this build is the unmodified
-Qt 6.12.0 community release (qtbase, qtshadertools, qtmultimedia), configured with
-`-static -static-runtime -release` and built without FFmpeg.
+From the MSYS2 CLANG64 packages; each one's licence text is in `licenses/msys2/<package>`.
 
-With the default minimal deploy (`TTIME_MINIMAL_DEPLOY=ON`), FFmpeg is **not** shipped. If you
-build with `-DTTIME_MINIMAL_DEPLOY=OFF`, the FFmpeg libraries (`av*.dll`, `sw*.dll`) are included
-as well. They are licensed under the GNU LGPL v2.1 or later; source is available from
-<https://ffmpeg.org/>.
+| Library | MSYS2 package | Licence |
+|---------|---------------|---------|
+| LLVM libc++, compiler-rt builtins | `libc++`, `compiler-rt` | Apache-2.0 WITH LLVM-exception |
+| mingw-w64 C runtime startup code | `crt` | ZPL-2.1 and public domain |
+| FreeType | `freetype` | FreeType License (FTL), chosen over GPL-2.0 |
+| HarfBuzz | `harfbuzz` | MIT |
+| Graphite2 | `graphite2` | LGPL-2.1-or-later |
+| libpng | `libpng` | PNG Reference Library License v2 |
+| zlib | `zlib` | Zlib |
+| Brotli (decoder) | `brotli` | MIT |
+| bzip2 | `bzip2` | bzip2 licence (BSD-style) |
+| BLAKE2 (libb2) | `libb2` | CC0-1.0 |
+| MD4C | `md4c` | MIT |
+| PCRE2 | `pcre2` | BSD-3-Clause |
+| OpenSSL (libcrypto) | `openssl` | Apache-2.0 |
 
-### macOS
+Portions of this software are copyright © 2026 The FreeType Project (<https://freetype.org>).
+All rights reserved.
 
-The macOS app bundle carries the same Qt modules as frameworks in `tTime.app/Contents/Frameworks`
-and the plugins in `Contents/PlugIns`, under the same licence. macdeployqt cannot leave plugins
-out, so the bundle also contains Qt Multimedia's FFmpeg backend and the FFmpeg libraries it
-plays sound with (GNU LGPL v2.1 or later; source from <https://ffmpeg.org/>, and the Qt build of
-FFmpeg is described at <https://doc.qt.io/qt-6/qtmultimedia-index.html>).
+Graphite2 is under the LGPL v2.1 or later, like Qt under the LGPL v3: its source is available
+from <https://github.com/silnrsi/graphite>, and relinking `tTime.exe` against a modified
+Graphite2 works the same way as for Qt.
 
-## MinGW-w64 runtime (Windows only)
+The exe also uses the Universal C Runtime (`ucrtbase.dll`, `api-ms-win-crt-*`), which is part of
+Windows 10/11 and is not shipped.
 
-- **GCC runtime** (`libstdc++-6.dll`, `libgcc_s_seh-1.dll`): GNU GPL v3 with the GCC Runtime
-  Library Exception v3.1 (`licenses/GPL-3.0.txt`,
-  `licenses/GCC-Runtime-Library-Exception-3.1.txt`). The exception allows distributing them
-  with programs under any licence.
-- **winpthreads** (`libwinpthread-1.dll`): MIT-style licence (`licenses/winpthreads.txt`).
+### Shared Windows builds
 
-The static build ships no MinGW DLLs: their code is linked into `tTime.exe` instead. The GCC
-Runtime Library Exception covers that as well, and winpthreads' licence only asks for its
-notice in the documentation, which this section is.
+`clang64-release` and `clang64-debug` link Qt dynamically. Their install step deploys Qt, Qt
+Multimedia's FFmpeg backend and about 100 MSYS2 DLLs, including GPL-licensed codecs (x264,
+x265, Xvid). They are meant for development only: their licences are not collected, and such a
+folder must not be distributed as is.
+
+## macOS: `tTime-<version>-macos-arm64.dmg`
+
+The app bundle carries Qt Core, Gui, Widgets, Multimedia and Network as frameworks in
+`tTime.app/Contents/Frameworks` and the plugins in `Contents/PlugIns`, under the LGPL v3 as
+above; the sources of the unmodified Qt community release are available from
+<https://download.qt.io/>. You can replace the Qt frameworks in the bundle with your own build of
+the same Qt version. macdeployqt cannot leave plugins out, so the bundle also contains Qt
+Multimedia's FFmpeg backend and the FFmpeg libraries it plays sound with (GNU LGPL v2.1 or later;
+source from <https://ffmpeg.org/>, and the Qt build of FFmpeg is described at
+<https://doc.qt.io/qt-6/qtmultimedia-index.html>).
 
 ## Fonts (compiled into `tTime.exe`)
 

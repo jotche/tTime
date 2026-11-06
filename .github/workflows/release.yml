@@ -4,8 +4,9 @@
 # artifacts, or push a version tag (git tag v1.0.0 && git push origin v1.0.0) to also
 # attach them to a GitHub release for that tag.
 #
-# Qt 6.8 LTS is used because install-qt-action (aqtinstall) cannot install Qt 6.12 yet;
-# see ci.yml. The macOS app is signed ad hoc only (no Apple developer certificate), so
+# Windows: a static exe built in MSYS2 CLANG64 with MSYS2's qt6-static (Qt 6.12). macOS:
+# Qt 6.8 LTS, because install-qt-action (aqtinstall) cannot install Qt 6.12 yet; see
+# ci.yml. The macOS app is signed ad hoc only (no Apple developer certificate), so
 # Gatekeeper asks before the first start - see README.
 name: Release
 
@@ -22,32 +23,40 @@ env:
 
 jobs:
   windows:
-    name: Windows x64 (ZIP)
+    name: Windows x64 (ZIP, static)
     runs-on: windows-2022
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v4
-      - name: Install Qt and MinGW
-        uses: jurplel/install-qt-action@v4
+      - name: Install MSYS2 CLANG64 toolchain and static Qt
+        uses: msys2/setup-msys2@v2
         with:
-          version: ${{ env.QT_VERSION }}
-          host: windows
-          target: desktop
-          arch: win64_mingw
-          modules: qtmultimedia
-          tools: tools_mingw1310
-          add-tools-to-path: true
-          cache: true
+          msystem: CLANG64
+          update: true
+          # qt6-base brings the libraries qt6-static links against (FreeType, HarfBuzz,
+          # OpenSSL, ...), including their static .a files.
+          pacboy: >-
+            clang:p lld:p cmake:p ninja:p pkgconf:p
+            qt6-base:p qt6-static:p
       - name: Configure
-        shell: bash
         run: >
           cmake -S . -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
-          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_CXX_COMPILER=clang++
+          -DCMAKE_PREFIX_PATH="$(cygpath -m /clang64/qt6-static);$(cygpath -m /clang64)"
+          -DTTIME_STATIC=ON
       - name: Build
         run: cmake --build build
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      - name: Check that the exe needs no MSYS2 DLLs
+        run: |
+          objdump -p build/tTime.exe | grep "DLL Name"
+          if objdump -p build/tTime.exe | grep -iE "DLL Name: (lib|Qt6|zlib)"; then
+            echo "tTime.exe depends on MSYS2 DLLs"; exit 1
+          fi
       - name: Package
         run: cmake --build build --target package
       - uses: actions/upload-artifact@v4

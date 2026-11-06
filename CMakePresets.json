@@ -10,46 +10,46 @@
       "installDir": "${sourceDir}/dist/${presetName}"
     },
     {
-      "name": "windows-mingw",
+      "name": "windows-clang64",
       "hidden": true,
       "inherits": "base",
-      "description": "Qt 6.12 + MinGW 13.1 as installed by the Qt online installer under %QT_ROOT% (e.g. C:\\Qt)",
+      "description": "MSYS2 CLANG64 environment (Clang, libc++, Qt 6.12) under %MSYS2_ROOT% (e.g. C:\\msys64)",
       "condition": {
         "type": "allOf",
         "conditions": [
           { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
-          { "type": "notEquals", "lhs": "$penv{QT_ROOT}", "rhs": "" }
+          { "type": "notEquals", "lhs": "$penv{MSYS2_ROOT}", "rhs": "" }
         ]
       },
       "environment": {
-        "QT_DIR_MINGW": "$penv{QT_ROOT}/6.12.0/mingw_64",
-        "PATH": "$penv{QT_ROOT}/Tools/mingw1310_64/bin;$penv{QT_ROOT}/Tools/Ninja;$env{QT_DIR_MINGW}/bin;$penv{PATH}"
+        "PATH": "$penv{MSYS2_ROOT}/clang64/bin;$penv{PATH}"
       },
       "cacheVariables": {
-        "CMAKE_PREFIX_PATH": "$env{QT_DIR_MINGW}",
-        "CMAKE_CXX_COMPILER": "g++"
+        "CMAKE_PREFIX_PATH": "$penv{MSYS2_ROOT}/clang64",
+        "CMAKE_CXX_COMPILER": "clang++"
       }
     },
     {
-      "name": "mingw-debug",
-      "displayName": "Qt 6.12 MinGW 64-bit - Debug (needs QT_ROOT)",
-      "inherits": "windows-mingw",
+      "name": "clang64-debug",
+      "displayName": "MSYS2 CLANG64 - Debug (needs MSYS2_ROOT)",
+      "inherits": "windows-clang64",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
     },
     {
-      "name": "mingw-release",
-      "displayName": "Qt 6.12 MinGW 64-bit - Release (needs QT_ROOT)",
-      "inherits": "windows-mingw",
+      "name": "clang64-release",
+      "displayName": "MSYS2 CLANG64 - Release, shared Qt (needs MSYS2_ROOT)",
+      "inherits": "windows-clang64",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
-      "name": "mingw-release-static",
-      "displayName": "Qt 6.12 MinGW 64-bit - Release, static Qt (needs QT_ROOT and scripts/build-static-qt.ps1)",
-      "inherits": "windows-mingw",
-      "environment": {
-        "QT_DIR_MINGW": "$penv{QT_ROOT}/6.12.0/mingw_64_static"
-      },
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      "name": "clang64-release-static",
+      "displayName": "MSYS2 CLANG64 - Release, static Qt: the release package (needs MSYS2_ROOT)",
+      "inherits": "windows-clang64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_PREFIX_PATH": "$penv{MSYS2_ROOT}/clang64/qt6-static;$penv{MSYS2_ROOT}/clang64",
+        "TTIME_STATIC": "ON"
+      }
     },
     {
       "name": "default",
@@ -59,15 +59,15 @@
     }
   ],
   "buildPresets": [
-    { "name": "mingw-debug", "configurePreset": "mingw-debug" },
-    { "name": "mingw-release", "configurePreset": "mingw-release" },
-    { "name": "mingw-release-static", "configurePreset": "mingw-release-static" },
+    { "name": "clang64-debug", "configurePreset": "clang64-debug" },
+    { "name": "clang64-release", "configurePreset": "clang64-release" },
+    { "name": "clang64-release-static", "configurePreset": "clang64-release-static" },
     { "name": "default", "configurePreset": "default" }
   ],
   "testPresets": [
-    { "name": "mingw-debug", "configurePreset": "mingw-debug", "output": { "outputOnFailure": true } },
-    { "name": "mingw-release", "configurePreset": "mingw-release", "output": { "outputOnFailure": true } },
-    { "name": "mingw-release-static", "configurePreset": "mingw-release-static", "output": { "outputOnFailure": true } },
+    { "name": "clang64-debug", "configurePreset": "clang64-debug", "output": { "outputOnFailure": true } },
+    { "name": "clang64-release", "configurePreset": "clang64-release", "output": { "outputOnFailure": true } },
+    { "name": "clang64-release-static", "configurePreset": "clang64-release-static", "output": { "outputOnFailure": true } },
     { "name": "default", "configurePreset": "default", "output": { "outputOnFailure": true } }
   ]
 }

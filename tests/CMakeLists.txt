@@ -8,6 +8,7 @@ function(ttime_add_test name)
     endif()
     qt_add_executable(${name} ${name}.cpp)
     target_link_libraries(${name} PRIVATE ${arg_LIBS} ttime_options Qt6::Test)
+    ttime_select_static_plugins(${name})
     add_test(NAME ${name} COMMAND ${name})
     # Windows: find the Qt DLLs without deploying them, and render with the real
     # (DirectWrite) text engine - widgets are grabbed without being shown.

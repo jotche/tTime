@@ -11,80 +11,69 @@ developed and tested with Qt 6.12.
 
 ## Requirements (Windows)
 
-All tools are installed under `C:\Qt`, in the same layout the official Qt
-online installer uses:
+tTime is built in the **MSYS2 CLANG64** environment (Clang, LLVM's libc++, Universal CRT):
 
-| Component            | Location                              |
-|----------------------|---------------------------------------|
-| Qt 6.12.0, MinGW 64  | `C:\Qt\6.12.0\mingw_64`               |
-| MinGW 13.1 (g++)     | `C:\Qt\Tools\mingw1310_64`            |
-| CMake 3.30           | `C:\Qt\Tools\CMake_64`                |
-| Ninja 1.12           | `C:\Qt\Tools\Ninja`                   |
+1. Install MSYS2 (<https://www.msys2.org/>, or `winget install MSYS2.MSYS2`) to `C:\msys64`.
+2. In an MSYS2 shell, install the toolchain and Qt (Qt 6.12, shared and static):
+
+   ```sh
+   pacman -Syu
+   pacman -S --needed mingw-w64-clang-x86_64-{clang,lld,cmake,ninja,pkgconf,qt6-base,qt6-multimedia,qt6-tools,qt6-static}
+   ```
+
+3. The `clang64-*` presets find MSYS2 through the `MSYS2_ROOT` environment variable. Set it
+   once, then open a new terminal:
+
+   ```powershell
+   setx MSYS2_ROOT C:\msys64
+   ```
+
+Without `MSYS2_ROOT` the `clang64-*` presets are disabled (`cmake --list-presets` shows only
+`default`).
 
 Qt modules used: `Core`, `Gui`, `Widgets`, `Multimedia` (alarm sound), and `Test` (unit tests).
 
-> To set this up on another machine, use the Qt Online Installer
-> (<https://www.qt.io/download-qt-installer-oss>). Select *Qt 6.12.0 → MinGW 13.1
-> 64-bit* and *Qt Multimedia*, plus *Developer and Designer Tools → MinGW 13.1,
-> CMake, Ninja*.
-
-The `mingw-*` presets find Qt, MinGW and Ninja through the `QT_ROOT` environment variable
-(the folder the Qt installer used). Set it once, then open a new terminal:
-
-```powershell
-setx QT_ROOT C:\Qt
-```
-
-Without `QT_ROOT` the `mingw-*` presets are disabled (`cmake --list-presets` shows only
-`default`).
-
 ## Build, test, run
+
+There are three presets:
+
+| Preset | Qt | Use |
+|--------|----|-----|
+| `clang64-release-static` | static (`qt6-static`) | **the release build**: one `tTime.exe`, no DLLs |
+| `clang64-release` | shared | development; deploys ~125 files (~200 MB) |
+| `clang64-debug` | shared | debugging |
 
 From a PowerShell prompt in the repository root:
 
 ```powershell
-$env:PATH = "C:\Qt\Tools\CMake_64\bin;$env:PATH"   # only cmake is needed on PATH
+$env:PATH = "C:\msys64\clang64\bin;$env:PATH"   # cmake, clang++, ninja
 
-cmake --preset mingw-release          # configure (presets set compiler/Qt/Ninja paths)
-cmake --build --preset mingw-release  # build
-ctest --preset mingw-release          # run unit tests
-cmake --install build/mingw-release   # deploy: exe + Qt DLLs/plugins -> dist/mingw-release
-cmake --build --preset mingw-release --target package   # ZIP -> build/mingw-release/packages
+cmake --preset clang64-release-static           # configure (presets set compiler/Qt paths)
+cmake --build --preset clang64-release-static   # build
+ctest --preset clang64-release-static           # run unit tests
+cmake --install build/clang64-release-static    # exe, tTime.ini, licences -> dist/clang64-release-static
+cmake --build --preset clang64-release-static --target package   # tTime-<version>-windows-x64.zip
 
-.\dist\mingw-release\bin\tTime.exe            # opens the "new alarm" input
-.\dist\mingw-release\bin\tTime.exe 5m green tea
-.\dist\mingw-release\bin\tTime.exe 10s test   # quick test: rings after 10 s
+.\dist\clang64-release-static\bin\tTime.exe            # opens the "new alarm" input
+.\dist\clang64-release-static\bin\tTime.exe 5m green tea
+.\dist\clang64-release-static\bin\tTime.exe 10s test   # quick test: rings after 10 s
 ```
 
-Use `mingw-debug` instead of `mingw-release` for a debug build.
-`dist\mingw-release` is self-contained, and the `package` target zips the same content as
-`tTime-<version>-windows-x64.zip`; it runs on any Windows 10/11 x64 machine. The version comes
-from `project(tTime VERSION ...)` in `CMakeLists.txt` and is also shown in the file properties of
-`tTime.exe`. After committing a release, tag it: `git tag -a v1.0.0 -m "tTime 1.0.0"`.
-It contains only the Qt parts tTime uses: about 39 MB on disk, about 16 MB zipped.
-To deploy the full Qt runtime instead (OpenGL fallback, FFmpeg, translations, all
-plugins), configure with `-DTTIME_MINIMAL_DEPLOY=OFF`.
+The static build links Qt, its third-party libraries (FreeType, HarfBuzz, libpng, zlib, PCRE2,
+OpenSSL's libcrypto, ...) and the C++ runtime into `tTime.exe` (about 30 MB, 12.5 MB zipped). It
+needs only Windows' own DLLs (including the Universal CRT that ships with Windows 10/11), so
+the ZIP runs on any Windows 10/11 x64 machine. It plays the alarm through Qt's native Windows
+media backend. The version comes from `project(tTime VERSION ...)` in `CMakeLists.txt` and is
+also shown in the file properties of `tTime.exe`. After committing a release, tag it:
+`git tag -a v1.0.0 -m "tTime 1.0.0"`.
 
-### Static build (optional, Windows)
-
-The `mingw-release-static` preset links Qt and the MinGW runtime into `tTime.exe`, so the
-distribution is one exe plus `tTime.ini` and the licences, with no DLLs. It needs a static Qt,
-which the Qt installer does not provide. Build it once (about 30-60 minutes), with the MinGW,
-CMake and Ninja from the Qt installer:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\build-static-qt.ps1   # -> C:\Qt\6.12.0\mingw_64_static
-
-cmake --preset mingw-release-static
-cmake --build --preset mingw-release-static
-ctest --preset mingw-release-static
-cmake --install build/mingw-release-static    # -> dist/mingw-release-static
-cmake --build --preset mingw-release-static --target package   # tTime-<version>-windows-x64-static.zip
-```
-
-The script downloads the qtbase, qtshadertools and qtmultimedia sources from download.qt.io,
-checks their MD5 sums and builds them under `C:\Qt\static-build` (delete that folder afterwards).
-See `THIRD-PARTY-NOTICES.md` for what static linking means for Qt's LGPL licence.
+**Shared builds** (`clang64-release`, `clang64-debug`) are for development. MSYS2's shared
+Qt Multimedia only has the FFmpeg backend, so `cmake --install` deploys Qt, FFmpeg and their
+MSYS2 DLLs (about 125 files, 200 MB) next to the exe. That folder runs without MSYS2, but do not
+distribute it: MSYS2's FFmpeg includes GPL codecs (x264, x265, Xvid), and the licences of those
+DLLs are not collected. Its `package` target is named `tTime-<version>-windows-x64-shared.zip`.
+`-DTTIME_MINIMAL_DEPLOY=OFF` deploys the full Qt runtime (OpenGL fallback, translations, all
+plugins).
 
 ### Release packages (Windows x64 and macOS arm64)
 
@@ -165,11 +154,11 @@ starts, so changes apply the next time tTime starts. The built-in defaults are `
 `defaultCountdownWeight`, `defaultMessageFontId`, `defaultMessageWeight` and the `default*PointSize`
 constants in `src/countdown-font.h`.
 
-**Qt Creator / VS Code / CLion:** open the folder (or `CMakeLists.txt`) and pick
-the *Qt 6.12 MinGW 64-bit* preset.
+**Qt Creator / VS Code / CLion:** open the folder (or `CMakeLists.txt`) and pick one of
+the *MSYS2 CLANG64* presets.
 
-To run the non-deployed exe straight from `build\`, put
-`C:\Qt\6.12.0\mingw_64\bin` and `C:\Qt\Tools\mingw1310_64\bin` on `PATH` first.
+The static exe in `build\clang64-release-static` runs as is. To run a shared build straight
+from `build\`, put `C:\msys64\clang64\bin` on `PATH` first.
 
 ## Usage
 
@@ -193,7 +182,7 @@ CMakePresets.json       ready-made configure/build/test presets
 src/                    sources, .ui forms, assets (src/Resources), shipped default
                         settings (tTime.ini)
 tests/                  Qt Test suites (logic, settings, themes, widgets)
-scripts/                build-static-qt.ps1 (static Qt for the mingw-release-static preset)
+cmake/                  deploy-dlls.cmake (copies MSYS2 DLLs in a shared install)
 licenses/               licence texts installed with the app
 _docs/                  project documentation (code review)
 LICENSE                 tTime's licence (MIT)
@@ -218,7 +207,9 @@ window (`CountdownWindow`, then `TimeUpWindow`), and reports `finished`, `closed
 `newAlarmRequested`.
 
 CMake options: `-DTTIME_BUILD_TESTS=OFF`, `-DTTIME_WARNINGS_AS_ERRORS=ON`, `-DTTIME_MINIMAL_DEPLOY=OFF`,
-`-DTTIME_SANITIZE=ON` (AddressSanitizer + UBSan; GCC/Clang on Linux/macOS, not MinGW).
+`-DTTIME_STATIC=ON` (link everything into one exe; needs a static Qt, set by the
+`clang64-release-static` preset), `-DTTIME_SANITIZE=ON` (AddressSanitizer + UBSan; GCC/Clang on
+Linux/macOS, not Windows).
 
 ## Code style and checks
 
@@ -226,22 +217,24 @@ CMake options: `-DTTIME_BUILD_TESTS=OFF`, `-DTTIME_WARNINGS_AS_ERRORS=ON`, `-DTT
   `clang-format -i <file>`; check everything with
   `clang-format --dry-run --Werror src/*.cpp src/*.h tests/*.cpp`.
 - **Static analysis:** `.clang-tidy` (bugprone, performance, modernize and selected readability
-  checks; `tests/.clang-tidy` relaxes one check for `QVERIFY`-guarded code). With MinGW:
-  `clang-tidy -p build/mingw-release --extra-arg=--target=x86_64-w64-mingw32 --extra-arg=--sysroot=%QT_ROOT%/Tools/mingw1310_64 <file>`.
+  checks; `tests/.clang-tidy` relaxes one check for `QVERIFY`-guarded code). With CLANG64:
+  `clang-tidy -p build/clang64-release <file>` (MSYS2 has it in `mingw-w64-clang-x86_64-clang-tools-extra`).
 - Both tools are available from pip (`pip install clang-format==23.1.5 clang-tidy==23.1.4`).
 - `.editorconfig` and `.gitattributes` set UTF-8, LF line endings and 4-space indentation.
-- **CI** (`.github/workflows/ci.yml`, GitHub Actions): formatting; Windows MinGW build with
-  warnings as errors, tests and the ZIP as an artifact; Linux build with sanitizers, offscreen
-  tests and clang-tidy. The Release workflow (`release.yml`) builds the Windows ZIP and the
-  macOS arm64 DMG. Both use Qt 6.8 LTS (the installer tooling for CI cannot install the
-  Qt 6.12 layout yet).
+- **CI** (`.github/workflows/ci.yml`, GitHub Actions): formatting; Windows MSYS2 CLANG64
+  build (shared Qt 6.12) with warnings as errors and tests; Linux build with sanitizers,
+  offscreen tests and clang-tidy. The Release workflow (`release.yml`) builds the static
+  Windows ZIP with MSYS2 CLANG64 and the macOS arm64 DMG. Linux and macOS use Qt 6.8 LTS (the
+  installer tooling for CI cannot install the Qt 6.12 layout yet); Windows gets Qt 6.12 from
+  MSYS2.
 
 Sound diagnostics: set `QT_LOGGING_RULES=ttime.sound.debug=true` to log alarm playback.
 
 ## License
 
 tTime is released under the MIT License (see `LICENSE`). Distributions also contain Qt (LGPL-3.0),
-the MinGW-w64 runtime and the bundled fonts (SIL Open Font License 1.1); see
+the libraries linked into the static exe (FreeType, HarfBuzz, OpenSSL, LLVM runtime, ...) and
+the bundled fonts (SIL Open Font License 1.1); see
 `THIRD-PARTY-NOTICES.md`. The origin and licence of the icons, the tree picture and the alarm
 sound from the original 2010 project are not recorded; confirm or replace them before a public
 release.

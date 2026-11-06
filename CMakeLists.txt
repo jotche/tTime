@@ -15,25 +15,57 @@ option(TTIME_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
 option(TTIME_MINIMAL_DEPLOY "Deploy only the Qt parts tTime uses (smaller dist)" ON)
 option(TTIME_SANITIZE "Build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC/Clang, not MinGW)" OFF)
 
+option(TTIME_STATIC "Link everything statically into one exe (needs a static Qt, e.g. MSYS2's qt6-static)" OFF)
+
+if(TTIME_STATIC AND MINGW)
+    # Qt's third-party libraries (zlib, FreeType, HarfBuzz, PCRE2, ...) are found while
+    # Qt is: take their static libraries, not the DLL import libraries next to them.
+    # The Find modules also add the system libraries a static OpenSSL needs (crypt32).
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+    set(OPENSSL_USE_STATIC_LIBS ON)
+    set(ZLIB_USE_STATIC_LIBS ON)
+endif()
+
 # 6.7: QFont::Tag / QFont::setVariableAxis (variable countdown fonts)
 find_package(Qt6 6.7 COMPONENTS Core Gui Widgets Multimedia)
 if(NOT Qt6_FOUND)
     message(FATAL_ERROR
         "Qt 6.7 or newer (Core, Gui, Widgets, Multimedia) was not found. "
-        "With the mingw-* presets, set the QT_ROOT environment variable to your Qt "
-        "installation (e.g. setx QT_ROOT C:/Qt) and start a new terminal. Otherwise pass "
-        "-DCMAKE_PREFIX_PATH=<Qt>/6.x.y/<compiler>.")
+        "With the clang64-* presets, install the MSYS2 CLANG64 packages listed in the README, "
+        "set the MSYS2_ROOT environment variable (e.g. setx MSYS2_ROOT C:/msys64) and start a "
+        "new terminal. Otherwise pass -DCMAKE_PREFIX_PATH=<Qt>/6.x.y/<compiler>.")
 endif()
 qt_standard_project_setup(REQUIRES 6.7)
 
-# A static Qt (scripts/build-static-qt.ps1, mingw-release-static preset) is linked into
-# tTime.exe: no Qt DLLs, plugins or deployment step.
+# A static Qt (clang64-release-static preset) is linked into tTime.exe: no Qt DLLs,
+# plugins or deployment step.
 get_target_property(ttime_qt_type Qt6::Core TYPE)
 if(ttime_qt_type STREQUAL "STATIC_LIBRARY")
     set(TTIME_QT_STATIC ON)
-    message(STATUS "tTime: static Qt, building a single self-contained executable")
 else()
     set(TTIME_QT_STATIC OFF)
+endif()
+if(TTIME_STATIC AND NOT TTIME_QT_STATIC)
+    message(FATAL_ERROR "TTIME_STATIC needs a static Qt (MSYS2: <MSYS2_ROOT>/clang64/qt6-static).")
+elseif(TTIME_STATIC)
+    message(STATUS "tTime: static build, a single self-contained executable")
+    if(MINGW)
+        # MSYS2's qt6-static links Qt's third-party libraries through their CMake
+        # packages and Find modules, which do not list the libraries a *static* copy
+        # needs in turn (FreeType -> brotli, bzip2; HarfBuzz -> GLib, Graphite2; ...).
+        # pkg-config --static knows them; lld resolves static libraries in any order.
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(ttime_static_deps REQUIRED
+            harfbuzz freetype2 libpng16 zlib libpcre2-16 libb2 libzstd libcrypto
+            double-conversion md4c)
+        # HarfBuzz's CMake package always points at the DLL.
+        if(TARGET harfbuzz::harfbuzz)
+            find_library(ttime_harfbuzz_static NAMES harfbuzz REQUIRED)
+            set_target_properties(harfbuzz::harfbuzz PROPERTIES IMPORTED_LOCATION "${ttime_harfbuzz_static}")
+        endif()
+    endif()
+elseif(TTIME_QT_STATIC)
+    message(WARNING "Static Qt without TTIME_STATIC: Qt's own dependencies stay DLLs.")
 endif()
 
 include(GNUInstallDirs)
@@ -62,10 +94,13 @@ else()
     endif()
 endif()
 
-if(TTIME_QT_STATIC AND MINGW)
-    # Link the MinGW runtime (libgcc, libstdc++, winpthread) in as well, like the static
-    # Qt itself (-static-runtime), so no MinGW DLLs are needed either.
+if(TTIME_STATIC AND MINGW)
+    # Link the C++ runtime (libc++, libunwind) and winpthreads in as well, so the exe
+    # needs no MSYS2 DLLs at all.
     target_link_options(ttime_options INTERFACE -static)
+    # Plain names: with -static, the linker takes lib<name>.a for each of them.
+    target_link_directories(ttime_options INTERFACE ${ttime_static_deps_STATIC_LIBRARY_DIRS})
+    target_link_libraries(ttime_options INTERFACE ${ttime_static_deps_STATIC_LIBRARIES})
 endif()
 
 if(TTIME_SANITIZE)
@@ -211,14 +246,17 @@ target_link_libraries(tTime PRIVATE
     ttime_ui
     ttime_options)
 
-# Static Qt plugins: Qt links its default plugins into the executable. Leave out the
-# ones the minimal deploy leaves out too (tTime only uses PNG/ICO images and plays a
-# WAV through the native Windows media backend).
-if(TTIME_QT_STATIC)
-    qt_import_plugins(tTime
-        EXCLUDE_BY_TYPE iconengines generic tls networkinformation
-        EXCLUDE Qt6::QJpegPlugin Qt6::QGifPlugin)
-endif()
+# Static Qt plugins: Qt links its default plugins into each executable. Keep only what
+# tTime uses (the tests too): ICO images (PNG is built into Qt Gui), the Windows
+# platform and style plugins, and the native Windows media backend.
+function(ttime_select_static_plugins target)
+    if(TTIME_QT_STATIC)
+        qt_import_plugins(${target}
+            INCLUDE_BY_TYPE imageformats Qt6::QICOPlugin
+            EXCLUDE_BY_TYPE iconengines generic tls networkinformation platforminputcontexts sqldrivers)
+    endif()
+endfunction()
+ttime_select_static_plugins(tTime)
 
 # Strip symbols from optimised GCC/Clang builds (smaller exe). Apple's linker has
 # no plain -s.
@@ -227,7 +265,7 @@ if(NOT MSVC AND NOT APPLE)
 endif()
 
 # ---------------------------------------------------------------------------
-# Install + deployment (copies the Qt runtime next to the executable)
+# Install + deployment (copies the Qt runtime next to the executable, unless static)
 #   cmake --install <build-dir> --prefix <dist-dir>
 # ---------------------------------------------------------------------------
 install(TARGETS tTime
@@ -245,19 +283,26 @@ if(NOT TTIME_QT_STATIC)
     elseif(TTIME_MINIMAL_DEPLOY)
         # tTime is a plain widgets app that plays one WAV file:
         #  - no OpenGL / Direct3D rendering   -> no software GL rasteriser, no D3D compiler
-        #  - WAV via the native Windows media backend -> no FFmpeg (~27 MB)
         #  - only PNG/ICO images              -> no SVG/JPEG/GIF plugins (and no Qt6Svg)
         #  - no networking / touch            -> no TLS, network-information, TUIO plugins
         #  - English-only UI                  -> no Qt translations
+        #  - WAV via the native Windows media backend -> no FFmpeg, if Qt has that
+        #    backend (MSYS2's shared Qt Multimedia only has the FFmpeg one)
+        set(ttime_skip_plugins qjpeg,qgif,qsvg)
+        set(ttime_ffmpeg_options)
+        if(TARGET Qt6::QWindowsMediaPlugin)
+            string(APPEND ttime_skip_plugins ",ffmpegmediaplugin")
+            set(ttime_ffmpeg_options --no-ffmpeg)
+        endif()
         list(APPEND ttime_deploy_args
             NO_TRANSLATIONS
             DEPLOY_TOOL_OPTIONS
                 --no-opengl-sw
                 --no-system-d3d-compiler
                 --no-system-dxc-compiler
-                --no-ffmpeg
+                ${ttime_ffmpeg_options}
                 --skip-plugin-types iconengines,generic,tls,networkinformation
-                --exclude-plugins ffmpegmediaplugin,qjpeg,qgif,qsvg)
+                --exclude-plugins ${ttime_skip_plugins})
     endif()
 
     qt_generate_deploy_app_script(
@@ -279,6 +324,17 @@ if(NOT TTIME_QT_STATIC)
     else()
         install(SCRIPT ${ttime_deploy_script})
     endif()
+
+    if(WIN32)
+        # windeployqt copies Qt's DLLs and plugins but not the third-party DLLs they
+        # load from Qt's folder (MSYS2: ICU, HarfBuzz, FFmpeg, libc++, ...).
+        install(CODE "
+            set(TTIME_DLL_DIR \"$<TARGET_FILE_DIR:Qt6::Core>\")
+            set(TTIME_BIN_DIR \"${CMAKE_INSTALL_BINDIR}\")
+            set(TTIME_OBJDUMP \"${CMAKE_OBJDUMP}\")
+        ")
+        install(SCRIPT cmake/deploy-dlls.cmake)
+    endif()
 endif()
 
 if(NOT APPLE)
@@ -287,8 +343,8 @@ if(NOT APPLE)
     install(FILES src/tTime.ini DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
-# tTime's licence and the licences of everything shipped with it (Qt, MinGW
-# runtime, fonts compiled into the exe). See THIRD-PARTY-NOTICES.md.
+# tTime's licence and the licences of everything shipped with it (Qt, the libraries
+# linked into the static exe, fonts compiled into the exe). See THIRD-PARTY-NOTICES.md.
 install(FILES
     LICENSE
     THIRD-PARTY-NOTICES.md
@@ -300,12 +356,19 @@ install(FILES
     src/Resources/fonts/Oxanium-OFL.txt
     src/Resources/fonts/Sansation-OFL.txt
     DESTINATION licenses)
-if(MINGW AND NOT TTIME_QT_STATIC)
-    # The MinGW runtime DLLs shipped next to tTime.exe (linked in with a static Qt).
-    install(FILES
-        licenses/GCC-Runtime-Library-Exception-3.1.txt
-        licenses/winpthreads.txt
-        DESTINATION licenses)
+if(TTIME_STATIC AND MINGW)
+    # The MSYS2 packages whose static libraries end up in tTime.exe, with the licence
+    # files MSYS2 installs for them (<MSYS2_ROOT>/clang64/share/licenses/<package>).
+    cmake_path(GET CMAKE_CXX_COMPILER PARENT_PATH ttime_toolchain_bin)
+    cmake_path(GET ttime_toolchain_bin PARENT_PATH ttime_toolchain_prefix)
+    foreach(pkg IN ITEMS brotli bzip2 compiler-rt crt freetype graphite2 harfbuzz libb2
+                         libc++ libpng md4c openssl pcre2 zlib)
+        set(dir "${ttime_toolchain_prefix}/share/licenses/${pkg}")
+        if(NOT IS_DIRECTORY "${dir}")
+            message(FATAL_ERROR "Licence files of the MSYS2 package ${pkg} not found in ${dir}.")
+        endif()
+        install(DIRECTORY "${dir}" DESTINATION licenses/msys2)
+    endforeach()
 endif()
 
 # ---------------------------------------------------------------------------
@@ -319,7 +382,7 @@ endif()
 # ---------------------------------------------------------------------------
 # Packaging: the complete installation (app, Qt runtime, licences) as a ZIP on
 # Windows and as a DMG (tTime.app, Applications link, licences) on macOS.
-#   cmake --build --preset mingw-release --target package
+#   cmake --build --preset clang64-release-static --target package
 # ---------------------------------------------------------------------------
 set(CPACK_PACKAGE_NAME "tTime")
 set(CPACK_PACKAGE_VENDOR "Vladimir Gjokjevski")
@@ -341,9 +404,11 @@ else()
     set(CPACK_GENERATOR "ZIP")
 endif()
 if(WIN32)
+    # The static build is the release package. A shared MSYS2 build carries FFmpeg and
+    # ~100 DLLs (GPL codecs among them, see README): for local use, marked as such.
     set(CPACK_SYSTEM_NAME "windows-x64")
-    if(TTIME_QT_STATIC)
-        string(APPEND CPACK_SYSTEM_NAME "-static")
+    if(NOT TTIME_QT_STATIC)
+        string(APPEND CPACK_SYSTEM_NAME "-shared")
     endif()
 endif()
 set(CPACK_PACKAGE_FILE_NAME "tTime-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
