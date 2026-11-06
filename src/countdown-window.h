@@ -43,9 +43,12 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
 private:
+    void placeWindowActions();
+    void fitHeightToContent();
     void createActions();
     void createTrayIcon();
     void togglePlayPause();

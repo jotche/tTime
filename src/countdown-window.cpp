@@ -11,6 +11,7 @@
 #include <QAction>
 #include <QCloseEvent>
 #include <QFont>
+#include <QFontMetrics>
 #include <QGuiApplication>
 #include <QMenu>
 #include <QMouseEvent>
@@ -30,6 +31,15 @@ namespace {
 // existing tTime.ini files keep their saved window size and position.
 const auto settingsSizeKey = QStringLiteral("progress-dialog/size");
 const auto settingsPosKey = QStringLiteral("progress-dialog/pos");
+// Used when tTime.ini has no size; the shipped tTime.ini has the same value.
+constexpr QSize defaultWindowSize(200, 130);
+// The window can be made wider but not narrower than this; its height always
+// follows the content.
+constexpr int minimumWindowWidth = 200;
+// The window actions sit this far from the top and right edges, ignoring the padding.
+constexpr int windowActionsInset = 8;
+// Smallest gap between the action row and the window actions.
+constexpr int windowActionsGap = 8;
 
 } // namespace
 
@@ -58,15 +68,10 @@ CountdownWindow::CountdownWindow(Alarm *alarm, const AppConfig &config, AppSetti
     createTrayIcon();
 
     ui->timeLabel->setFont(config.countdownFont);
-    // Indent the countdown and the message below it relative to the toolbar.
-    constexpr int labelIndent = 5;
-    // Pull the message closer to the countdown by trimming the bottom of the
-    // countdown label. That strip only holds the font's descender space, which
-    // digits never use, so nothing visible is clipped.
-    constexpr int messageRaise = 3;
-    ui->timeLabel->setContentsMargins(labelIndent, 0, 0, -messageRaise);
-    ui->descriptionLabel->setContentsMargins(labelIndent, 0, 0, 0);
-
+    // Digits sit on the baseline and never use the font's descender space, so
+    // leave it out of the countdown label: the 4px gap to the message is then
+    // the visible gap below the digits.
+    ui->timeLabel->setContentsMargins(0, 0, 0, -QFontMetrics(config.countdownFont).descent());
     ui->descriptionLabel->setText(m_alarm->message());
     ui->descriptionLabel->setFont(config.messageFont);
 
@@ -92,6 +97,18 @@ CountdownWindow::CountdownWindow(Alarm *alarm, const AppConfig &config, AppSetti
         button->ensurePolished();
         button->setFixedSize(button->sizeHint());
     }
+    // The window actions float over the top-right corner (see placeWindowActions()).
+    ui->windowActions->adjustSize();
+    ui->windowActions->raise();
+    // Reserve room for them at the end of the action row, so a narrow window keeps
+    // windowActionsGap between the two. The row ends at the right padding; the
+    // window actions end windowActionsInset from the edge.
+    ui->actionContainer->addSpacing(ui->windowActions->width() + windowActionsInset
+                                    - layout()->contentsMargins().right() + windowActionsGap);
+    placeWindowActions();
+
+    setMinimumWidth(minimumWindowWidth);
+    fitHeightToContent();
 
     onTimeLeftChanged(m_alarm->remainingSeconds());
     onStateChanged(m_alarm->state());
@@ -158,7 +175,7 @@ void CountdownWindow::mousePressEvent(QMouseEvent *event)
     QWindow *window = windowHandle();
     const bool resize = event->modifiers().testFlag(Qt::ControlModifier);
     const bool handled
-        = window && (resize ? window->startSystemResize(Qt::BottomEdge | Qt::RightEdge) : window->startSystemMove());
+        = window && (resize ? window->startSystemResize(Qt::RightEdge) : window->startSystemMove());
 
     m_manualDrag = !handled && !resize;
     if (m_manualDrag) {
@@ -175,6 +192,30 @@ void CountdownWindow::mouseMoveEvent(QMouseEvent *event)
         return;
     }
     QWidget::mouseMoveEvent(event);
+}
+
+void CountdownWindow::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    fitHeightToContent(); // a new width can rewrap the message
+    placeWindowActions();
+}
+
+void CountdownWindow::fitHeightToContent()
+{
+    const QLayout *content = layout();
+    const int height = content->hasHeightForWidth() ? content->totalHeightForWidth(width())
+                                                    : content->totalSizeHint().height();
+    if (minimumHeight() != height || maximumHeight() != height) {
+        setFixedHeight(height);
+    }
+}
+
+void CountdownWindow::placeWindowActions()
+{
+    // Pinned to the top-right corner, outside the window's padding and layout.
+    QWidget *actions = ui->windowActions;
+    actions->move(width() - actions->width() - windowActionsInset, windowActionsInset);
 }
 
 void CountdownWindow::closeEvent(QCloseEvent *event)
@@ -303,7 +344,7 @@ void CountdownWindow::loadSettings()
 {
     const AppSettings &settings = m_settings;
     const QRect saved(settings.value(settingsPosKey, QPoint(250, 250)).toPoint(),
-                      settings.value(settingsSizeKey, QSize(200, 95)).toSize());
+                      settings.value(settingsSizeKey, defaultWindowSize).toSize());
 
     // The saved position may be off-screen (monitor unplugged, resolution or
     // taskbar changed): move it by the shortest distance so it is fully visible.
@@ -315,7 +356,7 @@ void CountdownWindow::loadSettings()
         visibleAreas.append(QRect(0, 0, 1024, 768)); // no screen info at all; be defensive
     }
     const VisiblePlacement visible
-        = fitIntoVisibleArea(saved.isValid() ? saved : QRect(250, 250, 200, 95), visibleAreas);
+        = fitIntoVisibleArea(saved.isValid() ? saved : QRect(QPoint(250, 250), defaultWindowSize), visibleAreas);
 
     // Offset this window if other tTime windows (in this or other processes) are open.
     resize(visible.geometry.size());

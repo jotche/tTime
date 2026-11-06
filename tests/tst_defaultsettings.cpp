@@ -47,7 +47,7 @@ private slots:
     void windowDefaultsParse()
     {
         const QSettings ini(QStringLiteral(TTIME_DEFAULT_INI), QSettings::IniFormat);
-        QCOMPARE(ini.value(QStringLiteral("progress-dialog/size")).toSize(), QSize(200, 95));
+        QCOMPARE(ini.value(QStringLiteral("progress-dialog/size")).toSize(), QSize(200, 130));
         QCOMPARE(ini.value(QStringLiteral("progress-dialog/pos")).toPoint(), QPoint(250, 250));
     }
 
