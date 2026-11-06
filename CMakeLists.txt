@@ -236,19 +236,19 @@ qt_generate_deploy_app_script(
     OUTPUT_SCRIPT ttime_deploy_script
     NO_UNSUPPORTED_PLATFORM_ERROR
     ${ttime_deploy_args})
-install(SCRIPT ${ttime_deploy_script})
-
 if(APPLE)
     # macdeployqt rewrites the binaries, which breaks their signature, and Apple
     # silicon refuses to run unsigned code: sign the whole bundle again (ad hoc, no
-    # developer certificate). Also add the usual Applications link for the DMG.
-    install(CODE [[
+    # developer certificate) in the same step, right after the deployment. (CPack
+    # adds the Applications link to the DMG itself.)
+    install(CODE "
+        include(\"${ttime_deploy_script}\")
         execute_process(
-            COMMAND codesign --force --deep --sign - "${CMAKE_INSTALL_PREFIX}/tTime.app"
+            COMMAND codesign --force --deep --sign - \"\${CMAKE_INSTALL_PREFIX}/tTime.app\"
             COMMAND_ERROR_IS_FATAL ANY)
-        file(CREATE_LINK /Applications "${CMAKE_INSTALL_PREFIX}/Applications" SYMBOLIC)
-    ]])
+    ")
 else()
+    install(SCRIPT ${ttime_deploy_script})
     # Default settings, read (never written) from next to the executable. (In the
     # macOS bundle they are in Contents/Resources, see above.)
     install(FILES src/tTime.ini DESTINATION ${CMAKE_INSTALL_BINDIR})
