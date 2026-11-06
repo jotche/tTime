@@ -1,0 +1,10 @@
+# Text files are stored and checked out with LF, independent of core.autocrlf.
+* text=auto eol=lf
+
+# Binary assets
+*.ttf  binary
+*.otf  binary
+*.png  binary
+*.ico  binary
+*.icns binary
+*.wav  binary

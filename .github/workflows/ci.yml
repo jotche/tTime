@@ -1,0 +1,107 @@
+# Continuous integration: formatting, a Windows (MinGW) build with all tests, and a
+# Linux build with AddressSanitizer/UBSan, offscreen tests and clang-tidy.
+#
+# CI uses Qt 6.8 LTS: it is the oldest supported line above tTime's minimum (Qt 6.7) and
+# can be installed by install-qt-action (aqtinstall does not support the Qt 6.12
+# repository layout yet). Developers build with Qt 6.12 locally (see README).
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  QT_VERSION: "6.8.3"
+  CLANG_FORMAT_VERSION: "23.1.5" # same versions as used to format/check the code
+  CLANG_TIDY_VERSION: "23.1.4"
+
+jobs:
+  format:
+    name: clang-format
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: |
+          pip install "clang-format==${CLANG_FORMAT_VERSION}"
+          clang-format --version
+          clang-format --dry-run --Werror src/*.cpp src/*.h tests/*.cpp
+
+  windows:
+    name: Windows (MinGW)
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt and MinGW
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_mingw
+          modules: qtmultimedia
+          tools: tools_mingw1310
+          add-tools-to-path: true
+          cache: true
+      - name: Configure
+        shell: bash
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+          -DCMAKE_CXX_COMPILER=g++
+          -DTTIME_WARNINGS_AS_ERRORS=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+      - name: Package
+        run: cmake --build build --target package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tTime-windows-x64
+          path: build/packages/*.zip
+
+  linux:
+    name: Linux (GCC, sanitizers, clang-tidy)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgl1-mesa-dev libegl1 libxkbcommon-dev libpulse-dev libfontconfig1
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          modules: qtmultimedia
+          cache: true
+      - name: Configure
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Debug
+          -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+          -DTTIME_WARNINGS_AS_ERRORS=ON
+          -DTTIME_SANITIZE=ON
+      - name: Build
+        run: cmake --build build
+      - name: Test (offscreen, AddressSanitizer + UBSan)
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir build --output-on-failure
+      - name: clang-tidy
+        run: |
+          pip install "clang-tidy==${CLANG_TIDY_VERSION}"
+          clang-tidy --version
+          for f in src/*.cpp tests/*.cpp; do
+            clang-tidy -p build --quiet --warnings-as-errors='*' "$f" || exit 1
+          done

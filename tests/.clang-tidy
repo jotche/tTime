@@ -1,0 +1,4 @@
+# Tests check optionals with QVERIFY(x.has_value()) first; QVERIFY returns on
+# failure, which clang-tidy cannot see, so the unchecked-access check only adds noise here.
+InheritParentConfig: true
+Checks: -bugprone-unchecked-optional-access

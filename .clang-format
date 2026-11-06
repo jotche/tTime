@@ -1,0 +1,68 @@
+# Code style of tTime, close to Qt's own (https://wiki.qt.io/Qt_Coding_Style).
+# Format a file:  clang-format -i src/countdown-window.cpp
+BasedOnStyle: WebKit
+Standard: c++20
+ColumnLimit: 120
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Braces on their own line for classes, structs and functions; same line otherwise.
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterControlStatement: Never
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+
+PointerAlignment: Right
+ReferenceAlignment: Right
+AccessModifierOffset: -4
+NamespaceIndentation: None
+FixNamespaceComments: true
+CompactNamespaces: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortLambdasOnASingleLine: All
+AllowShortEnumsOnASingleLine: true
+BreakConstructorInitializers: BeforeComma
+ConstructorInitializerIndentWidth: 4
+PackConstructorInitializers: Never
+BreakInheritanceList: BeforeColon
+AlignAfterOpenBracket: Align
+BinPackArguments: true
+BinPackParameters: true
+Cpp11BracedListStyle: true
+SpaceBeforeCpp11BracedList: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeParens: ControlStatements
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+ReflowComments: false
+
+# Qt keywords
+AttributeMacros: ['Q_DECL_EXPORT', 'Q_DECL_IMPORT']
+StatementAttributeLikeMacros: [emit]
+MacroBlockBegin: ''
+
+# Includes: own header first, then project headers, then Qt, then the standard library.
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^"ui_'
+    Priority: 2
+  - Regex: '^"'
+    Priority: 2
+  - Regex: '^<Q'
+    Priority: 3
+  - Regex: '^<'
+    Priority: 4

@@ -1,0 +1,38 @@
+# Static analysis for tTime.
+# bugprone-throwing-static-initialization is off: it flags every global QStringLiteral
+# constant (which can only throw on out-of-memory at start-up), a normal Qt idiom.
+# Run (after configuring, which writes compile_commands.json):
+#   run-clang-tidy -p build/<preset> src
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-throwing-static-initialization,
+  -bugprone-narrowing-conversions,
+  performance-*,
+  -performance-enum-size,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  -modernize-use-nodiscard,
+  -modernize-use-designated-initializers,
+  -modernize-use-integer-sign-comparison,
+  readability-container-size-empty,
+  readability-delete-null-pointer,
+  readability-duplicate-include,
+  readability-else-after-return,
+  readability-inconsistent-declaration-parameter-name,
+  readability-make-member-function-const,
+  readability-redundant-member-init,
+  readability-redundant-smartptr-get,
+  readability-simplify-boolean-expr,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-virtual-class-destructor,
+  cppcoreguidelines-slicing,
+  misc-redundant-expression,
+  misc-unused-using-decls,
+  misc-misplaced-const
+WarningsAsErrors: ''
+# Only report on tTime's own code, not Qt or generated moc/uic files.
+HeaderFilterRegex: '.*[/\](src|tests)[/\][^/\]*\.h$'
+FormatStyle: file
