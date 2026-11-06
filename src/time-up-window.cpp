@@ -54,6 +54,10 @@ TimeUpWindow::TimeUpWindow(const Alarm &alarm, const AppConfig &config, QWidget 
     setAttribute(Qt::WA_TranslucentBackground);
 
     ui->timerLabel->setText(alarm.message());
+    // Same font as the message in the countdown window, at its own size.
+    QFont messageFont = config.messageFont;
+    messageFont.setPointSize(config.timeUpMessagePointSize);
+    ui->timerLabel->setFont(messageFont);
     // The tree artwork has a translucent fill drawn for the blue theme.
     const QImage picture = recolorForTheme(QImage(QStringLiteral(":/images/tree02")), m_theme);
     ui->label->setPixmap(QPixmap::fromImage(picture));

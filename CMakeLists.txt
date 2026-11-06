@@ -124,7 +124,8 @@ ttime_add_resources(fonts
     sansation_light=src/Resources/fonts/Sansation-Light.ttf
     oxanium=src/Resources/fonts/Oxanium-Variable.ttf
     jura=src/Resources/fonts/Jura-Variable.ttf
-    doto=src/Resources/fonts/Doto-Variable.ttf)
+    doto=src/Resources/fonts/Doto-Variable.ttf
+    outfit=src/Resources/fonts/Outfit-Variable.ttf)
 ttime_add_resources(icons
     alarm=src/Resources/icons/alarm.ico
     anchor=src/Resources/icons01/flag1_16.png
@@ -263,6 +264,7 @@ install(FILES
     licenses/LGPL-3.0.txt
     src/Resources/fonts/Doto-OFL.txt
     src/Resources/fonts/Jura-OFL.txt
+    src/Resources/fonts/Outfit-OFL.txt
     src/Resources/fonts/Oxanium-OFL.txt
     src/Resources/fonts/Sansation-OFL.txt
     DESTINATION licenses)

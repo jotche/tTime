@@ -74,7 +74,8 @@ private:
 private slots:
     void initTestCase()
     {
-        for (const char *file : {"Oxanium-Variable.ttf", "Jura-Variable.ttf", "Doto-Variable.ttf"}) {
+        for (const char *file : {"Oxanium-Variable.ttf", "Jura-Variable.ttf", "Doto-Variable.ttf",
+                                 "Outfit-Variable.ttf", "Sansation-Light.ttf", "Sansation-Regular.ttf"}) {
             const QString path = QStringLiteral(TTIME_FONT_DIR "/") + QLatin1String(file);
             QVERIFY2(QFontDatabase::addApplicationFont(path) >= 0, file);
         }
@@ -114,6 +115,8 @@ private slots:
         QTest::newRow("oxanium") << "oxanium" << "Oxanium";
         QTest::newRow("jura") << "jura" << "Jura";
         QTest::newRow("doto") << "doto" << "Doto";
+        QTest::newRow("outfit") << "outfit" << "Outfit";
+        QTest::newRow("sansation") << "sansation" << "Sansation";
         QTest::newRow("unknown id -> default") << "comic" << "Oxanium";
     }
 
@@ -134,6 +137,7 @@ private slots:
         QTest::newRow("oxanium 200 vs 800") << "oxanium" << 200 << 800;
         QTest::newRow("jura 300 vs 700") << "jura" << 300 << 700;
         QTest::newRow("doto 300 vs 900") << "doto" << 300 << 900;
+        QTest::newRow("outfit 200 vs 700") << "outfit" << 200 << 700;
     }
 
     void weightChangesStrokeThickness()
@@ -155,6 +159,30 @@ private slots:
         QCOMPARE(makeCountdownFont(QStringLiteral("jura"), 900).weight(), 700);
         QCOMPARE(makeCountdownFont(QStringLiteral("doto"), 900).weight(), 900);
         QCOMPARE(makeCountdownFont(QStringLiteral("oxanium"), 300).weight(), 300);
+        QCOMPARE(makeCountdownFont(QStringLiteral("sansation"), 700).weight(), 400);
+    }
+
+    void pointSizes()
+    {
+        QCOMPARE(makeCountdownFont(QStringLiteral("oxanium"), 400).pointSize(), defaultCountdownPointSize);
+        QCOMPARE(makeCountdownFont(QStringLiteral("oxanium"), 400, 30).pointSize(), 30);
+        QCOMPARE(makeMessageFont(QStringLiteral("outfit"), 300, 11).pointSize(), 11);
+        QCOMPARE(parsePointSize(QStringLiteral(" 24 ")), 24);
+        QCOMPARE(parsePointSize(QStringLiteral("6")), 6);
+        QCOMPARE(parsePointSize(QStringLiteral("96")), 96);
+        QVERIFY(!parsePointSize(QStringLiteral("5")).has_value());
+        QVERIFY(!parsePointSize(QStringLiteral("97")).has_value());
+        QVERIFY(!parsePointSize(QStringLiteral("12.5")).has_value());
+        QVERIFY(!parsePointSize(QStringLiteral("big")).has_value());
+    }
+
+    void messageFontDefaultsToOutfitLight()
+    {
+        const QFont font = makeMessageFont(QStringLiteral("unknown"), defaultMessageWeight);
+        QCOMPARE(font.weight(), 300);
+        QCOMPARE(font.pointSize(), 14);
+        const QFontInfo info(font);
+        QVERIFY2(info.family().startsWith(QStringLiteral("Outfit")), qPrintable(info.family()));
     }
 
     void sizeHintIndependentOfDigits()

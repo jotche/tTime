@@ -92,16 +92,20 @@ right-click -> **Open** (or *System Settings -> Privacy & Security -> Open Anywa
 notarization would remove that step. On macOS the tray icon opens its menu on click (there is no
 double-click); use **Restore** there to show a hidden countdown window.
 
-The other text uses Sansation (Regular and Light, SIL Open Font License 1.1).
-Bundled countdown fonts are variable fonts, so any weight in their range works. They use the SIL
-Open Font License 1.1, are compiled into `tTime.exe`, and their licences are installed to
-`dist/<preset>/licenses/`:
+The countdown and the alarm message each use a configurable font (`countdown-font` and
+`message-font`; the message font is used in both the countdown and the "Time's Up" window); the
+other text uses Sansation. All fonts use the SIL Open Font License 1.1, are
+compiled into `tTime.exe`, and their licences are installed to `dist/<preset>/licenses/`. Oxanium,
+Jura, Doto and Outfit are variable fonts, so any weight in their range works; Sansation is bundled as
+Light and Regular. Both settings accept every font:
 
-| `countdown-font` | Font | Weights | Source |
-|------------------|------|---------|--------|
-| `oxanium` (default) | Oxanium | 200-800 | <https://github.com/sevmeyer/oxanium> |
+| Font id | Font | Weights | Source |
+|---------|------|---------|--------|
+| `oxanium` (countdown default) | Oxanium | 200-800 | <https://github.com/sevmeyer/oxanium> |
 | `jura` | Jura | 300-700 | <https://github.com/ossobuffo/jura> |
 | `doto` | Doto (dot matrix) | 100-900 | <https://github.com/oliverlalan/Doto> |
+| `outfit` (message default) | Outfit | 100-900 | <https://github.com/Outfitio/Outfit-Fonts> |
+| `sansation` | Sansation | 300-400 | <https://github.com/google/fonts/tree/main/ofl/sansation> |
 
 Settings are read from two files. The first one that has a setting wins:
 
@@ -114,10 +118,17 @@ If neither file has a setting, the built-in defaults apply. The shipped file con
 
 ```ini
 [appearance]
-; oxanium, jura or doto
+; oxanium, jura, doto, outfit or sansation
 countdown-font=oxanium
 ; 100-900, or a name: thin, extralight, light, regular, medium, semibold, bold, extrabold, black
 countdown-weight=400
+; font and weight of the message below the countdown (same choices)
+message-font=outfit
+message-weight=400
+; font sizes in points (6-96): countdown, message below it, message in the "Time's Up" window
+countdown-size=18
+message-size=14
+time-up-message-size=20
 ; look of the windows and icon: blue, sage, prussian-blue, hibiscus-red,
 ; jade-green, forest-green, pine-green or hunter-green
 theme=blue
@@ -129,8 +140,9 @@ Comments must be on their own line: tTime.ini does not support comments after a 
 
 Weights outside a font's range are clamped to the nearest supported one. `theme` sets the look of the
 countdown and "Time's Up" windows and the button highlights. tTime reads these settings when it
-starts, so changes apply the next time tTime starts. The built-in defaults are `defaultCountdownFontId` and
-`defaultCountdownWeight` in `src/countdown-font.h`.
+starts, so changes apply the next time tTime starts. The built-in defaults are `defaultCountdownFontId`,
+`defaultCountdownWeight`, `defaultMessageFontId`, `defaultMessageWeight` and the `default*PointSize`
+constants in `src/countdown-font.h`.
 
 **Qt Creator / VS Code / CLion:** open the folder (or `CMakeLists.txt`) and pick
 the *Qt 6.12 MinGW 64-bit* preset.

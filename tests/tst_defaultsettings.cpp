@@ -27,6 +27,19 @@ private slots:
         QVERIFY(weight.has_value());
         QCOMPARE(*weight, defaultCountdownWeight);
 
+        QCOMPARE(ini.value(QStringLiteral("appearance/message-font")).toString(),
+                 QString::fromLatin1(defaultMessageFontId));
+        const auto messageWeight = parseFontWeight(ini.value(QStringLiteral("appearance/message-weight")).toString());
+        QVERIFY(messageWeight.has_value());
+        QCOMPARE(*messageWeight, defaultMessageWeight);
+
+        QCOMPARE(parsePointSize(ini.value(QStringLiteral("appearance/countdown-size")).toString()),
+                 defaultCountdownPointSize);
+        QCOMPARE(parsePointSize(ini.value(QStringLiteral("appearance/message-size")).toString()),
+                 defaultMessagePointSize);
+        QCOMPARE(parsePointSize(ini.value(QStringLiteral("appearance/time-up-message-size")).toString()),
+                 defaultTimeUpMessagePointSize);
+
         QCOMPARE(ini.value(QStringLiteral("appearance/theme")).toString(), QString::fromLatin1(defaultThemeName));
         QCOMPARE(AppSettings::parseSwitch(ini.value(QStringLiteral("appearance/animations")).toString()), true);
     }
@@ -43,9 +56,17 @@ private slots:
         // A typo in the shipped file would silently do nothing.
         const QSettings ini(QStringLiteral(TTIME_DEFAULT_INI), QSettings::IniFormat);
         const QStringList known = {
-            QStringLiteral("appearance/countdown-font"), QStringLiteral("appearance/countdown-weight"),
-            QStringLiteral("appearance/theme"),          QStringLiteral("appearance/animations"),
-            QStringLiteral("progress-dialog/size"),      QStringLiteral("progress-dialog/pos"),
+            QStringLiteral("appearance/countdown-font"),
+            QStringLiteral("appearance/countdown-weight"),
+            QStringLiteral("appearance/message-font"),
+            QStringLiteral("appearance/message-weight"),
+            QStringLiteral("appearance/countdown-size"),
+            QStringLiteral("appearance/message-size"),
+            QStringLiteral("appearance/time-up-message-size"),
+            QStringLiteral("appearance/theme"),
+            QStringLiteral("appearance/animations"),
+            QStringLiteral("progress-dialog/size"),
+            QStringLiteral("progress-dialog/pos"),
         };
         for (const QString &key : ini.allKeys()) {
             QVERIFY2(known.contains(key), qPrintable(QStringLiteral("unexpected key: ") + key));

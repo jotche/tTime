@@ -46,6 +46,7 @@ All bundled fonts are under the SIL Open Font License 1.1:
 | Oxanium | 2019 The Oxanium Project Authors (<https://github.com/sevmeyer/oxanium>) | `licenses/Oxanium-OFL.txt` |
 | Jura | 2019 The Jura Project Authors (<https://github.com/ossobuffo/jura>) | `licenses/Jura-OFL.txt` |
 | Doto | 2024 The Doto Project Authors (<https://github.com/oliverlalan/Doto>) | `licenses/Doto-OFL.txt` |
+| Outfit | 2021 The Outfit Project Authors (<https://github.com/Outfitio/Outfit-Fonts>) | `licenses/Outfit-OFL.txt` |
 | Sansation (Regular, Light) | 2011 Bernd Montag, Reserved Font Name "Sansation" (OFL release via <https://github.com/google/fonts/tree/main/ofl/sansation>) | `licenses/Sansation-OFL.txt` |
 
 ## Images and sound (compiled into `tTime.exe`)

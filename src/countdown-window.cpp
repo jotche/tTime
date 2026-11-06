@@ -68,11 +68,7 @@ CountdownWindow::CountdownWindow(Alarm *alarm, const AppConfig &config, AppSetti
     ui->descriptionLabel->setContentsMargins(labelIndent, 0, 0, 0);
 
     ui->descriptionLabel->setText(m_alarm->message());
-    QFont messageFont;
-    messageFont.setFamilies({QStringLiteral("Sansation Light"), QStringLiteral("Sansation")});
-    messageFont.setWeight(QFont::Light);
-    messageFont.setPointSize(14);
-    ui->descriptionLabel->setFont(messageFont);
+    ui->descriptionLabel->setFont(config.messageFont);
 
     ui->restartButton->setDefaultAction(m_restartAction);
     ui->minimizeButton->setDefaultAction(m_minimizeAction);
