@@ -180,7 +180,7 @@ private slots:
     {
         const QFont font = makeMessageFont(QStringLiteral("unknown"), defaultMessageWeight);
         QCOMPARE(font.weight(), 300);
-        QCOMPARE(font.pointSize(), 14);
+        QCOMPARE(font.pointSize(), defaultMessagePointSize);
         const QFontInfo info(font);
         QVERIFY2(info.family().startsWith(QStringLiteral("Outfit")), qPrintable(info.family()));
     }
