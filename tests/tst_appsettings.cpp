@@ -86,8 +86,13 @@ private slots:
         QCoreApplication::setOrganizationName(QStringLiteral("Somebody Else"));
         QCoreApplication::setApplicationName(QStringLiteral("other"));
 
-        QCOMPARE(AppSettings::defaultsFilePath(),
-                 QCoreApplication::applicationDirPath() + QStringLiteral("/tTime.ini"));
+#ifdef Q_OS_MACOS
+        // Inside the app bundle: Contents/MacOS/tTime -> Contents/Resources/tTime.ini
+        const QString shipped = QStringLiteral("/../Resources/tTime.ini");
+#else
+        const QString shipped = QStringLiteral("/tTime.ini");
+#endif
+        QCOMPARE(AppSettings::defaultsFilePath(), QCoreApplication::applicationDirPath() + shipped);
         QVERIFY2(AppSettings::userFilePath().endsWith(QStringLiteral("/tTime/tTime.ini")),
                  qPrintable(AppSettings::userFilePath()));
     }
