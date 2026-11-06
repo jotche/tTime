@@ -26,6 +26,16 @@ if(NOT Qt6_FOUND)
 endif()
 qt_standard_project_setup(REQUIRES 6.7)
 
+# A static Qt (scripts/build-static-qt.ps1, mingw-release-static preset) is linked into
+# tTime.exe: no Qt DLLs, plugins or deployment step.
+get_target_property(ttime_qt_type Qt6::Core TYPE)
+if(ttime_qt_type STREQUAL "STATIC_LIBRARY")
+    set(TTIME_QT_STATIC ON)
+    message(STATUS "tTime: static Qt, building a single self-contained executable")
+else()
+    set(TTIME_QT_STATIC OFF)
+endif()
+
 include(GNUInstallDirs)
 
 # ---------------------------------------------------------------------------
@@ -50,6 +60,12 @@ else()
     if(TTIME_WARNINGS_AS_ERRORS)
         target_compile_options(ttime_options INTERFACE -Werror)
     endif()
+endif()
+
+if(TTIME_QT_STATIC AND MINGW)
+    # Link the MinGW runtime (libgcc, libstdc++, winpthread) in as well, like the static
+    # Qt itself (-static-runtime), so no MinGW DLLs are needed either.
+    target_link_options(ttime_options INTERFACE -static)
 endif()
 
 if(TTIME_SANITIZE)
@@ -195,6 +211,15 @@ target_link_libraries(tTime PRIVATE
     ttime_ui
     ttime_options)
 
+# Static Qt plugins: Qt links its default plugins into the executable. Leave out the
+# ones the minimal deploy leaves out too (tTime only uses PNG/ICO images and plays a
+# WAV through the native Windows media backend).
+if(TTIME_QT_STATIC)
+    qt_import_plugins(tTime
+        EXCLUDE_BY_TYPE iconengines generic tls networkinformation
+        EXCLUDE Qt6::QJpegPlugin Qt6::QGifPlugin)
+endif()
+
 # Strip symbols from optimised GCC/Clang builds (smaller exe). Apple's linker has
 # no plain -s.
 if(NOT MSVC AND NOT APPLE)
@@ -209,47 +234,54 @@ install(TARGETS tTime
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-set(ttime_deploy_args)
-if(TTIME_MINIMAL_DEPLOY AND APPLE)
-    # macdeployqt cannot leave plugins out; only the translations are skipped. Qt
-    # Multimedia plays the WAV through its default (FFmpeg) backend on macOS.
-    list(APPEND ttime_deploy_args NO_TRANSLATIONS)
-elseif(TTIME_MINIMAL_DEPLOY)
-    # tTime is a plain widgets app that plays one WAV file:
-    #  - no OpenGL / Direct3D rendering   -> no software GL rasteriser, no D3D compiler
-    #  - WAV via the native Windows media backend -> no FFmpeg (~27 MB)
-    #  - only PNG/ICO images              -> no SVG/JPEG/GIF plugins (and no Qt6Svg)
-    #  - no networking / touch            -> no TLS, network-information, TUIO plugins
-    #  - English-only UI                  -> no Qt translations
-    list(APPEND ttime_deploy_args
-        NO_TRANSLATIONS
-        DEPLOY_TOOL_OPTIONS
-            --no-opengl-sw
-            --no-system-d3d-compiler
-            --no-system-dxc-compiler
-            --no-ffmpeg
-            --skip-plugin-types iconengines,generic,tls,networkinformation
-            --exclude-plugins ffmpegmediaplugin,qjpeg,qgif,qsvg)
+# With a static Qt there is nothing to deploy: Qt and its plugins are linked into
+# the executable (see "Static Qt plugins" above).
+if(NOT TTIME_QT_STATIC)
+    set(ttime_deploy_args)
+    if(TTIME_MINIMAL_DEPLOY AND APPLE)
+        # macdeployqt cannot leave plugins out; only the translations are skipped. Qt
+        # Multimedia plays the WAV through its default (FFmpeg) backend on macOS.
+        list(APPEND ttime_deploy_args NO_TRANSLATIONS)
+    elseif(TTIME_MINIMAL_DEPLOY)
+        # tTime is a plain widgets app that plays one WAV file:
+        #  - no OpenGL / Direct3D rendering   -> no software GL rasteriser, no D3D compiler
+        #  - WAV via the native Windows media backend -> no FFmpeg (~27 MB)
+        #  - only PNG/ICO images              -> no SVG/JPEG/GIF plugins (and no Qt6Svg)
+        #  - no networking / touch            -> no TLS, network-information, TUIO plugins
+        #  - English-only UI                  -> no Qt translations
+        list(APPEND ttime_deploy_args
+            NO_TRANSLATIONS
+            DEPLOY_TOOL_OPTIONS
+                --no-opengl-sw
+                --no-system-d3d-compiler
+                --no-system-dxc-compiler
+                --no-ffmpeg
+                --skip-plugin-types iconengines,generic,tls,networkinformation
+                --exclude-plugins ffmpegmediaplugin,qjpeg,qgif,qsvg)
+    endif()
+
+    qt_generate_deploy_app_script(
+        TARGET tTime
+        OUTPUT_SCRIPT ttime_deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR
+        ${ttime_deploy_args})
+    if(APPLE)
+        # macdeployqt rewrites the binaries, which breaks their signature, and Apple
+        # silicon refuses to run unsigned code: sign the whole bundle again (ad hoc, no
+        # developer certificate) in the same step, right after the deployment. (CPack
+        # adds the Applications link to the DMG itself.)
+        install(CODE "
+            include(\"${ttime_deploy_script}\")
+            execute_process(
+                COMMAND codesign --force --deep --sign - \"\${CMAKE_INSTALL_PREFIX}/tTime.app\"
+                COMMAND_ERROR_IS_FATAL ANY)
+        ")
+    else()
+        install(SCRIPT ${ttime_deploy_script})
+    endif()
 endif()
 
-qt_generate_deploy_app_script(
-    TARGET tTime
-    OUTPUT_SCRIPT ttime_deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
-    ${ttime_deploy_args})
-if(APPLE)
-    # macdeployqt rewrites the binaries, which breaks their signature, and Apple
-    # silicon refuses to run unsigned code: sign the whole bundle again (ad hoc, no
-    # developer certificate) in the same step, right after the deployment. (CPack
-    # adds the Applications link to the DMG itself.)
-    install(CODE "
-        include(\"${ttime_deploy_script}\")
-        execute_process(
-            COMMAND codesign --force --deep --sign - \"\${CMAKE_INSTALL_PREFIX}/tTime.app\"
-            COMMAND_ERROR_IS_FATAL ANY)
-    ")
-else()
-    install(SCRIPT ${ttime_deploy_script})
+if(NOT APPLE)
     # Default settings, read (never written) from next to the executable. (In the
     # macOS bundle they are in Contents/Resources, see above.)
     install(FILES src/tTime.ini DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -268,8 +300,8 @@ install(FILES
     src/Resources/fonts/Oxanium-OFL.txt
     src/Resources/fonts/Sansation-OFL.txt
     DESTINATION licenses)
-if(MINGW)
-    # The MinGW runtime DLLs shipped next to tTime.exe.
+if(MINGW AND NOT TTIME_QT_STATIC)
+    # The MinGW runtime DLLs shipped next to tTime.exe (linked in with a static Qt).
     install(FILES
         licenses/GCC-Runtime-Library-Exception-3.1.txt
         licenses/winpthreads.txt
@@ -310,6 +342,9 @@ else()
 endif()
 if(WIN32)
     set(CPACK_SYSTEM_NAME "windows-x64")
+    if(TTIME_QT_STATIC)
+        string(APPEND CPACK_SYSTEM_NAME "-static")
+    endif()
 endif()
 set(CPACK_PACKAGE_FILE_NAME "tTime-${PROJECT_VERSION}-${CPACK_SYSTEM_NAME}")
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_BINARY_DIR}/packages")

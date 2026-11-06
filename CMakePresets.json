@@ -43,6 +43,15 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
+      "name": "mingw-release-static",
+      "displayName": "Qt 6.12 MinGW 64-bit - Release, static Qt (needs QT_ROOT and scripts/build-static-qt.ps1)",
+      "inherits": "windows-mingw",
+      "environment": {
+        "QT_DIR_MINGW": "$penv{QT_ROOT}/6.12.0/mingw_64_static"
+      },
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
       "name": "default",
       "displayName": "Qt found via CMAKE_PREFIX_PATH / PATH (any platform)",
       "inherits": "base",
@@ -52,11 +61,13 @@
   "buildPresets": [
     { "name": "mingw-debug", "configurePreset": "mingw-debug" },
     { "name": "mingw-release", "configurePreset": "mingw-release" },
+    { "name": "mingw-release-static", "configurePreset": "mingw-release-static" },
     { "name": "default", "configurePreset": "default" }
   ],
   "testPresets": [
     { "name": "mingw-debug", "configurePreset": "mingw-debug", "output": { "outputOnFailure": true } },
     { "name": "mingw-release", "configurePreset": "mingw-release", "output": { "outputOnFailure": true } },
+    { "name": "mingw-release-static", "configurePreset": "mingw-release-static", "output": { "outputOnFailure": true } },
     { "name": "default", "configurePreset": "default", "output": { "outputOnFailure": true } }
   ]
 }

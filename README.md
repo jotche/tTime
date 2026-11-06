@@ -65,6 +65,27 @@ It contains only the Qt parts tTime uses: about 39 MB on disk, about 16 MB zippe
 To deploy the full Qt runtime instead (OpenGL fallback, FFmpeg, translations, all
 plugins), configure with `-DTTIME_MINIMAL_DEPLOY=OFF`.
 
+### Static build (optional, Windows)
+
+The `mingw-release-static` preset links Qt and the MinGW runtime into `tTime.exe`, so the
+distribution is one exe plus `tTime.ini` and the licences, with no DLLs. It needs a static Qt,
+which the Qt installer does not provide. Build it once (about 30-60 minutes), with the MinGW,
+CMake and Ninja from the Qt installer:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-static-qt.ps1   # -> C:\Qt\6.12.0\mingw_64_static
+
+cmake --preset mingw-release-static
+cmake --build --preset mingw-release-static
+ctest --preset mingw-release-static
+cmake --install build/mingw-release-static    # -> dist/mingw-release-static
+cmake --build --preset mingw-release-static --target package   # tTime-<version>-windows-x64-static.zip
+```
+
+The script downloads the qtbase, qtshadertools and qtmultimedia sources from download.qt.io,
+checks their MD5 sums and builds them under `C:\Qt\static-build` (delete that folder afterwards).
+See `THIRD-PARTY-NOTICES.md` for what static linking means for Qt's LGPL licence.
+
 ### Release packages (Windows x64 and macOS arm64)
 
 macOS packages can only be built on a Mac, so both packages are built by the **Release**
@@ -172,6 +193,7 @@ CMakePresets.json       ready-made configure/build/test presets
 src/                    sources, .ui forms, assets (src/Resources), shipped default
                         settings (tTime.ini)
 tests/                  Qt Test suites (logic, settings, themes, widgets)
+scripts/                build-static-qt.ps1 (static Qt for the mingw-release-static preset)
 licenses/               licence texts installed with the app
 _docs/                  project documentation (code review)
 LICENSE                 tTime's licence (MIT)

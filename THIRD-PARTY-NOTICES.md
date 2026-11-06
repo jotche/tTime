@@ -13,8 +13,19 @@ installed in the `licenses` folder next to `bin` (Windows) or next to `tTime.app
   the GNU General Public License v3 (`licenses/GPL-3.0.txt`).
 - **Source code:** Qt's source code is available from <https://download.qt.io/> and
   <https://code.qt.io/>. tTime uses the unmodified Qt 6.12.0 community release.
-- **Replacing Qt:** tTime links Qt dynamically. You can replace the Qt DLLs and plugins in a tTime
-  distribution with your own build of the same Qt version.
+- **Replacing Qt:** the standard tTime distribution links Qt dynamically. You can replace the
+  Qt DLLs and plugins in it with your own build of the same Qt version.
+
+### Static build (`tTime-<version>-windows-x64-static.zip`)
+
+The static build (`mingw-release-static` preset) has Qt Core, Gui, Widgets, Multimedia and
+Network, and the Qt plugins it uses, linked into `tTime.exe`, so it ships no Qt DLLs. Qt is
+still under the LGPL v3 there. To use a modified Qt with it, as section 4 of the LGPL v3
+allows: tTime's complete source code is available under the MIT License, and
+`scripts/build-static-qt.ps1` plus the `mingw-release-static` preset rebuild and relink
+`tTime.exe` against your own static Qt build. The Qt in this build is the unmodified
+Qt 6.12.0 community release (qtbase, qtshadertools, qtmultimedia), configured with
+`-static -static-runtime -release` and built without FFmpeg.
 
 With the default minimal deploy (`TTIME_MINIMAL_DEPLOY=ON`), FFmpeg is **not** shipped. If you
 build with `-DTTIME_MINIMAL_DEPLOY=OFF`, the FFmpeg libraries (`av*.dll`, `sw*.dll`) are included
@@ -36,6 +47,10 @@ FFmpeg is described at <https://doc.qt.io/qt-6/qtmultimedia-index.html>).
   `licenses/GCC-Runtime-Library-Exception-3.1.txt`). The exception allows distributing them
   with programs under any licence.
 - **winpthreads** (`libwinpthread-1.dll`): MIT-style licence (`licenses/winpthreads.txt`).
+
+The static build ships no MinGW DLLs: their code is linked into `tTime.exe` instead. The GCC
+Runtime Library Exception covers that as well, and winpthreads' licence only asks for its
+notice in the documentation, which this section is.
 
 ## Fonts (compiled into `tTime.exe`)
 
