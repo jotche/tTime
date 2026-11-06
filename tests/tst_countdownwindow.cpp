@@ -9,6 +9,8 @@
 #include <QTest>
 #include <QToolButton>
 
+#include <cstdlib>
+
 using namespace std::chrono_literals;
 
 namespace {
@@ -129,8 +131,15 @@ private slots:
         QCOMPARE(message.top(), time.bottom() + 1 + 4);
 
         // The countdown label ends at the digits' baseline: no descender space below them.
+        // Exactly the descender is taken off; the text height itself may round 1px
+        // differently per platform (macOS gives one more than Windows).
         const QFontMetrics metrics(config.countdownFont);
-        QCOMPARE(time.height(), metrics.height() - metrics.descent());
+        const auto *timeLabel = window.findChild<QWidget *>(QStringLiteral("timeLabel"));
+        QVERIFY(timeLabel);
+        QCOMPARE(timeLabel->contentsMargins().bottom(), -metrics.descent());
+        const int baselineHeight = metrics.height() - metrics.descent();
+        QVERIFY2(std::abs(time.height() - baselineHeight) <= 1,
+                 qPrintable(QStringLiteral("height %1, expected %2").arg(time.height()).arg(baselineHeight)));
         QCOMPARE(message.right(), window.width() - 8 - 1);
 
         // Window actions: 8px from the top-right corner, also after a resize.
