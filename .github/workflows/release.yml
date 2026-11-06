@@ -35,11 +35,15 @@ jobs:
         with:
           msystem: CLANG64
           update: true
-          # qt6-base brings the libraries qt6-static links against (FreeType, HarfBuzz,
-          # OpenSSL, ...), including their static .a files.
+          # qt6-static only depends on vulkan-loader, but its CMake packages look for
+          # every library MSYS2 built it with (its PKGBUILD makedepends: TIFF, WebP,
+          # JPEG, ...), and tTime links the static .a files of some of them. qt6-base
+          # brings the rest (HarfBuzz, Graphite2, MD4C, libb2, ...).
           pacboy: >-
             clang:p lld:p cmake:p ninja:p pkgconf:p
             qt6-base:p qt6-static:p
+            vulkan-headers:p dbus:p brotli:p freetype:p libjpeg-turbo:p libpng:p
+            libtiff:p libwebp:p litehtml:p openssl:p pcre2:p zlib:p zstd:p
       - name: Configure
         run: >
           cmake -S . -B build -G Ninja
