@@ -29,7 +29,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install MSYS2 CLANG64 toolchain and static Qt
         uses: msys2/setup-msys2@v2
         with:
@@ -63,7 +63,7 @@ jobs:
           fi
       - name: Package
         run: cmake --build build --target package
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tTime-windows-x64
           path: build/packages/*.zip
@@ -73,7 +73,7 @@ jobs:
     name: macOS arm64 (DMG)
     runs-on: macos-15 # Apple silicon
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
@@ -105,7 +105,7 @@ jobs:
           codesign --verify --deep --strict /tmp/ttime/tTime.app
           lipo -archs /tmp/ttime/tTime.app/Contents/MacOS/tTime
           hdiutil detach /tmp/ttime
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tTime-macos-arm64
           path: build/packages/*.dmg
@@ -119,7 +119,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: packages
           merge-multiple: true
