@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CountdownWindow</class>
+ <widget class="QWidget" name="CountdownWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>200</width>
+    <height>130</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>tTime</string>
+  </property>
+  <!-- window-content: the window's padding (12px top and bottom, 8px left and right), 8px between the action container and the content -->
+  <layout class="QVBoxLayout" name="windowContent">
+   <property name="spacing">
+    <number>8</number>
+   </property>
+   <property name="leftMargin">
+    <number>8</number>
+   </property>
+   <property name="topMargin">
+    <number>12</number>
+   </property>
+   <property name="rightMargin">
+    <number>8</number>
+   </property>
+   <property name="bottomMargin">
+    <number>12</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout" name="actionContainer">
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QToolButton" name="playPauseButton">
+       <property name="text">
+        <string>Pause</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>:/icons/pastel-pause</normaloff>:/icons/pastel-pause</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="autoRaise">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="stopButton">
+       <property name="text">
+        <string>Stop</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>:/icons/pastel-stop</normaloff>:/icons/pastel-stop</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="autoRaise">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="restartButton">
+       <property name="text">
+        <string>Restart</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>:/icons/pastel-repeat</normaloff>:/icons/pastel-repeat</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="autoRaise">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="actionStretch">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <!-- content-container: countdown and message, 4px apart, indented 4px -->
+    <layout class="QVBoxLayout" name="contentContainer">
+     <property name="spacing">
+      <number>4</number>
+     </property>
+     <property name="leftMargin">
+      <number>4</number>
+     </property>
+     <item>
+      <widget class="CountdownLabel" name="timeLabel">
+       <property name="styleSheet">
+        <string notr="true">color: rgb(255, 255, 255);</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="descriptionLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">color: rgb(240, 240, 240);</string>
+       </property>
+       <property name="textFormat">
+        <enum>Qt::PlainText</enum>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+  <!-- Window actions: not in the layout; CountdownWindow pins them 8px from the
+       top-right corner, ignoring the window padding. -->
+  <widget class="QWidget" name="windowActions">
+   <layout class="QHBoxLayout" name="windowActionsLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="QToolButton" name="stayOnTopButton">
+      <property name="toolTip">
+       <string>Always on top</string>
+      </property>
+      <property name="text">
+       <string>Always on top</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>:/icons/anchor</normaloff>:/icons/anchor</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>16</width>
+        <height>16</height>
+       </size>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+      <property name="autoRaise">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="minimizeButton">
+      <property name="text">
+       <string>Minimize</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>:/icons/down</normaloff>:/icons/down</iconset>
+      </property>
+      <property name="iconSize">
+       <size>
+        <width>16</width>
+        <height>16</height>
+       </size>
+      </property>
+      <property name="autoRaise">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QToolButton" name="exitButton">
+      <property name="text">
+       <string>Quit</string>
+      </property>
+      <property name="icon">
+       <iconset>
+        <normaloff>:/icons/exit</normaloff>:/icons/exit</iconset>
+       </property>
+      <property name="iconSize">
+       <size>
+        <width>16</width>
+        <height>16</height>
+       </size>
+      </property>
+      <property name="autoRaise">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CountdownLabel</class>
+   <extends>QLabel</extends>
+   <header>countdown-label.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

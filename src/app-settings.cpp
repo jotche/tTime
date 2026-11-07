@@ -1,0 +1,78 @@
+#include "app-settings.h"
+
+#include <QCoreApplication>
+#include <QSettings>
+
+namespace {
+
+// Fixed on purpose (not QCoreApplication::organizationName()), so the user's
+// settings stay where they are even if the application metadata changes.
+const char *const settingsOrganization = "tTime";
+const char *const settingsApplication = "tTime";
+
+} // namespace
+
+AppSettings::AppSettings(const QString &userFile, const QString &defaultsFile)
+    : m_user(new QSettings(userFile, QSettings::IniFormat))
+    , m_defaults(new QSettings(defaultsFile, QSettings::IniFormat))
+{
+    m_user->setFallbacksEnabled(false);
+    m_defaults->setFallbacksEnabled(false);
+}
+
+AppSettings::~AppSettings()
+{
+}
+
+QString AppSettings::userFilePath()
+{
+    // %APPDATA%\tTime\tTime.ini on Windows (the location tTime has always used).
+    return QSettings(QSettings::IniFormat, QSettings::UserScope, QLatin1String(settingsOrganization),
+                     QLatin1String(settingsApplication))
+        .fileName();
+}
+
+QString AppSettings::defaultsFilePath()
+{
+#ifdef Q_OS_MAC
+    // tTime.app/Contents/MacOS/tTime -> tTime.app/Contents/Resources/tTime.ini
+    return QCoreApplication::applicationDirPath() + QLatin1String("/../Resources/tTime.ini");
+#else
+    return QCoreApplication::applicationDirPath() + QLatin1String("/tTime.ini");
+#endif
+}
+
+QVariant AppSettings::value(const QString &key, const QVariant &fallback) const
+{
+    if (m_user->contains(key)) {
+        return m_user->value(key);
+    }
+    if (m_defaults->contains(key)) {
+        return m_defaults->value(key);
+    }
+    return fallback;
+}
+
+bool AppSettings::parseSwitch(const QString &text, bool *value)
+{
+    const QString key = text.trimmed().toLower();
+    bool on = false;
+    if (key == QLatin1String("on") || key == QLatin1String("true") || key == QLatin1String("yes")
+        || key == QLatin1String("1")) {
+        on = true;
+    } else if (key == QLatin1String("off") || key == QLatin1String("false") || key == QLatin1String("no")
+               || key == QLatin1String("0")) {
+        on = false;
+    } else {
+        return false;
+    }
+    if (value) {
+        *value = on;
+    }
+    return true;
+}
+
+void AppSettings::setValue(const QString &key, const QVariant &value)
+{
+    m_user->setValue(key, value);
+}

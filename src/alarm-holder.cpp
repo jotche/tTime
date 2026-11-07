@@ -1,74 +1,60 @@
 #include "alarm-holder.h"
-#include "tea-alarm.h"
-#include "tea-alarm-progress-dialog.h"
-#include "timer-finished-dialog.h"
 
-AlarmHolder::AlarmHolder(TeaAlarm *teaAlarm):
-teaAlarm(teaAlarm)
+#include "alarm.h"
+#include "countdown-window.h"
+#include "time-up-window.h"
+#include "window-utils.h"
+
+AlarmHolder::AlarmHolder(const AlarmSpec &spec, const AppConfig &config, AppSettings &settings, QObject *parent)
+    : QObject(parent)
+    , m_config(config)
+    , m_settings(settings)
+    , m_alarm(new Alarm(spec.duration, spec.message, this))
 {
-	alarmDisplay = NULL;
+    connect(m_alarm, SIGNAL(finished()), this, SLOT(showTimeUpWindow()));
 }
 
-AlarmHolder::~AlarmHolder(void)
+AlarmHolder::~AlarmHolder()
 {
-	delete teaAlarm;
-    alarmDisplay->close();
-    //delete alarmDisplay;
+    // The window refers to the alarm, so it goes first (the alarm is a child and
+    // is deleted after this body). Holders are disposed of with deleteLater()
+    // (see AlarmManager), so this never runs inside one of the window's own
+    // signal handlers.
+    delete m_window.data();
 }
 
-TeaAlarm* AlarmHolder::alarm(void)
+void AlarmHolder::start()
 {
-	return teaAlarm;
+    showCountdownWindow();
+    m_alarm->start();
 }
 
-void AlarmHolder::displayProgressDialog(void)
+void AlarmHolder::showCountdownWindow()
 {
-	QString id = QString::number(QDateTime::currentDateTime().toTime_t())
-		+ "_" + QString::number(QDateTime::currentDateTime().time().msec());
-
-	Qt::WFlags flags = Qt::FramelessWindowHint
-		| Qt::WindowSystemMenuHint
-		/*| Qt::WindowMinMaxButtonsHint*/
-		/*| Qt::Tool | Qt::WindowStaysOnTopHint*/;
-
-
-	TeaAlarmProgressDialog *progressDialog = new TeaAlarmProgressDialog(
-		0, flags, teaAlarm);
-
-	progressDialog->setStyleSheet("QToolButton {\
-border: 1px none;\
-padding: 0 0 0 1;\
-margin: 0 0 0 0;\
-}\
-\
-QToolButton:hover, QToolButton::pressed, QToolButton::checked {\
-background-color: rgba(141, 178, 206, 150);\
-border: 1px solid rgba(186, 209, 225, 220);\
-padding: 0 0 0 1;\
-margin: 0 0 0 0;\
-}");
-
-	if (alarmDisplay != NULL) {
-		delete alarmDisplay;
-	}
-
-	alarmDisplay = progressDialog;
-	alarmDisplay->show();
-	teaAlarm->start();
+    CountdownWindow *window = new CountdownWindow(m_alarm, m_config, m_settings);
+    connect(window, SIGNAL(quitRequested()), this, SIGNAL(closed()));
+    connect(window, SIGNAL(newAlarmRequested()), this, SIGNAL(newAlarmRequested()));
+    replaceWindow(window);
+    window->show();
 }
 
-TimerFinishedDialog* AlarmHolder::displayAlarmFinishedDialog(void)
+void AlarmHolder::showTimeUpWindow()
 {
-	TimerFinishedDialog *dialog = new TimerFinishedDialog(0, alarm());
-	dialog->setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    TimeUpWindow *window = new TimeUpWindow(*m_alarm, m_config);
+    connect(window, SIGNAL(dismissed()), this, SIGNAL(closed()));
+    connect(window, SIGNAL(newAlarmRequested()), this, SIGNAL(newAlarmRequested()));
+    replaceWindow(window);
+    showAndActivate(window);
+    emit finished();
+}
 
-	if (alarmDisplay != NULL) {
-		alarmDisplay->close();
-		delete alarmDisplay;
-	}
-
-	alarmDisplay = dialog;
-	alarmDisplay->show();
-
-	return dialog;
+void AlarmHolder::replaceWindow(QWidget *window)
+{
+    if (m_window) {
+        // We may be inside a signal the old window is connected to, so defer its
+        // destruction to the event loop.
+        m_window->hide();
+        m_window->deleteLater();
+    }
+    m_window = window;
 }

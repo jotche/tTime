@@ -1,0 +1,32 @@
+# Build / install output
+/build/
+/dist/
+/out/
+
+# IDE / user specific
+CMakeUserPresets.json
+CMakeLists.txt.user*
+*.pro.user*
+.qtcreator/
+.vs/
+.vscode/
+.idea/
+compile_commands.json
+
+# Runtime artefacts
+*.ini
+!/src/tTime.ini
+
+# qmake in-source build output
+Makefile
+Makefile.*
+object_script.*
+*.o
+*.a
+*.exe
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.moc
+/src/debug/
+/src/release/

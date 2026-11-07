@@ -1,0 +1,41 @@
+<RCC>
+ <qresource prefix="/fonts">
+  <file alias="Doto-Black.ttf">Resources/fonts/Doto-Black.ttf</file>
+  <file alias="Jura-Bold.ttf">Resources/fonts/Jura-Bold.ttf</file>
+  <file alias="Jura-Light.ttf">Resources/fonts/Jura-Light.ttf</file>
+  <file alias="Jura-Medium.ttf">Resources/fonts/Jura-Medium.ttf</file>
+  <file alias="Jura-Regular.ttf">Resources/fonts/Jura-Regular.ttf</file>
+  <file alias="Jura-SemiBold.ttf">Resources/fonts/Jura-SemiBold.ttf</file>
+  <file alias="Outfit-Black.ttf">Resources/fonts/Outfit-Black.ttf</file>
+  <file alias="Outfit-Bold.ttf">Resources/fonts/Outfit-Bold.ttf</file>
+  <file alias="Outfit-ExtraBold.ttf">Resources/fonts/Outfit-ExtraBold.ttf</file>
+  <file alias="Outfit-ExtraLight.ttf">Resources/fonts/Outfit-ExtraLight.ttf</file>
+  <file alias="Outfit-Light.ttf">Resources/fonts/Outfit-Light.ttf</file>
+  <file alias="Outfit-Medium.ttf">Resources/fonts/Outfit-Medium.ttf</file>
+  <file alias="Outfit-Regular.ttf">Resources/fonts/Outfit-Regular.ttf</file>
+  <file alias="Outfit-SemiBold.ttf">Resources/fonts/Outfit-SemiBold.ttf</file>
+  <file alias="Outfit-Thin.ttf">Resources/fonts/Outfit-Thin.ttf</file>
+  <file alias="Oxanium-Bold.ttf">Resources/fonts/Oxanium-Bold.ttf</file>
+  <file alias="Oxanium-ExtraBold.ttf">Resources/fonts/Oxanium-ExtraBold.ttf</file>
+  <file alias="Oxanium-ExtraLight.ttf">Resources/fonts/Oxanium-ExtraLight.ttf</file>
+  <file alias="Oxanium-Light.ttf">Resources/fonts/Oxanium-Light.ttf</file>
+  <file alias="Oxanium-Medium.ttf">Resources/fonts/Oxanium-Medium.ttf</file>
+  <file alias="Oxanium-Regular.ttf">Resources/fonts/Oxanium-Regular.ttf</file>
+  <file alias="Oxanium-SemiBold.ttf">Resources/fonts/Oxanium-SemiBold.ttf</file>
+  <file alias="Sansation-Light.ttf">Resources/fonts/Sansation-Light.ttf</file>
+  <file alias="Sansation-Regular.ttf">Resources/fonts/Sansation-Regular.ttf</file>
+ </qresource>
+ <qresource prefix="/icons">
+  <file alias="alarm">Resources/icons/alarm.png</file>
+  <file alias="anchor">Resources/icons01/flag1_16.png</file>
+  <file alias="down">Resources/icons01/arrow_down_16.png</file>
+  <file alias="exit">Resources/icons01/delete_16.png</file>
+  <file alias="pastel-repeat">Resources/icons01/reload_16.png</file>
+  <file alias="pastel-play">Resources/icons01/play_matched_16.png</file>
+  <file alias="pastel-pause">Resources/icons01/video_pause_16.png</file>
+  <file alias="pastel-stop">Resources/icons01/video_stop_16.png</file>
+ </qresource>
+ <qresource prefix="/images">
+  <file alias="tree02">Resources/images/tree02.png</file>
+ </qresource>
+</RCC>
