@@ -4,15 +4,16 @@ tTime itself is licensed under the MIT License (see `LICENSE`). A tTime distribu
 (`tTime.exe` with the DLLs listed in `README.md`) also contains the third-party components
 below. Their licence texts are installed in the `licenses` folder by `mingw32-make install`.
 
-## Qt 4 (Nokia Corporation and other contributors)
+## Qt 4.8.7 (The Qt Company Ltd., Digia, Nokia and other contributors)
 
-- **Used:** `QtCore4.dll` and `QtGui4.dll`, unmodified, as shipped with the Qt 4.7.4 (or 4.8)
-  open source release for MinGW.
-- **Licence:** GNU Lesser General Public License v2.1 (`licenses/LGPL-2.1.txt`) with the Nokia
-  Qt LGPL Exception version 1.1 (`licenses/Qt-LGPL-Exception-1.1.txt`).
-- **Source code:** <https://download.qt.io/archive/qt/4.7/> (and `/4.8/`).
+- **Used:** QtCore and QtGui, unmodified: `QtCore4.dll` and `QtGui4.dll` from the Qt 4.8.7
+  open source release for MinGW, or built from the 4.8.7 source for the static packages.
+- **Licence:** GNU Lesser General Public License v2.1 (`licenses/LGPL-2.1.txt`) with the Digia
+  Qt LGPL Exception version 1.1 (`licenses/Qt-LGPL-Exception-1.1.txt`). (Qt 4.8.7 is also
+  available under the LGPL v3; tTime uses it under the LGPL v2.1.)
+- **Source code:** <https://download.qt.io/archive/qt/4.8/4.8.7/>.
 - A shared build loads the Qt DLLs, which can be replaced with other builds of the same Qt
-  version. The static build (`tTime-<version>-windows-x86-static.zip`) links QtCore and QtGui
+  version. The static builds (`tTime-<version>-windows-<arch>-static.zip`) link QtCore and QtGui
   (with Qt's bundled zlib and libpng, under their own permissive licences) into `tTime.exe`;
   as the LGPL requires, tTime's complete source code is available under the MIT License, so
   `tTime.exe` can be relinked against a modified Qt (see "Static build" in `README.md`).

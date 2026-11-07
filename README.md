@@ -1,4 +1,4 @@
-# tTime 0.2.2
+# tTime 0.2.3
 
 Countdown alarms ("tea timer") that live in the Windows system tray.
 Type `5m green tea`, and a small translucent window counts down. When time is
@@ -6,25 +6,28 @@ up, a sound plays, the bell in the tray and taskbar icon swings and the tree in 
 "Time's Up" window sways in a light breeze until you dismiss it (`animations=off` in
 `tTime.ini` keeps everything still).
 
-This is the **0.2 line**, built with **Qt 4.7** and **qmake** (C++98). It carries the
-code, layout and design of tTime 1.x (themes, fonts, animations, window layout, settings,
-tests) without the move to Qt 6 / CMake and without the CI and packaging setup.
+This is the **0.2 line**, built with **Qt 4.8** (4.8.7, the final Qt 4 release) and **qmake**
+(C++98). It carries the code, layout and design of tTime 1.x (themes, fonts, animations,
+window layout, settings, tests) without the move to Qt 6 / CMake and without the CI and
+packaging setup.
 
 ## Requirements (Windows)
 
-- **Qt 4.7.4 for MinGW** (`qt-win-opensource-4.7.4-mingw.exe` from
-  <https://download.qt.io/archive/qt/4.7/>) and the **MinGW compiler it was built with**
-  (the Qt SDK's MinGW, GCC 4.4). Qt 4.8 works as well, with its matching MinGW
-  (`qt-opensource-windows-x86-mingw482-4.8.7.exe` + MinGW-w64 GCC 4.8.2).
+- **Qt 4.8.7 for MinGW** (`qt-opensource-windows-x86-mingw482-4.8.7.exe` from
+  <https://download.qt.io/archive/qt/4.8/4.8.7/>) and the **MinGW compiler it was built
+  with**: MinGW-w64 GCC 4.8.2 (`i686-4.8.2-release-posix-dwarf-rt_v3-rev3.7z` from
+  <https://download.qt.io/development_releases/prebuilt/mingw_32/>). A different compiler
+  (version or runtime) crashes at startup inside the Qt DLLs.
 - Qt modules used: `QtCore`, `QtGui` (widgets, tray icon and `QSound` for the alarm) and
   `QtTest` (unit tests).
 
-The code uses only C++98 and Qt 4.7 APIs.
+The code uses only C++98 and Qt 4 APIs that exist since Qt 4.7, so it also still builds with
+Qt 4.7.
 
 ## Build, test, run
 
 From a command prompt with Qt's `bin` and MinGW's `bin` on `PATH` (for example the
-"Qt 4.7.4 Command Prompt"), preferably in a separate build directory:
+"Qt 4.8.7 Command Prompt"), preferably in a separate build directory:
 
 ```bat
 mkdir build && cd build
@@ -56,15 +59,14 @@ cannot use from its compiled-in resources live in the `Resources` folder next to
 files only. `src\tTime.exe` in the build tree has no `Resources` folder next to it, so it runs
 silently (it logs "Alarm sound not found"); run the installed copy to hear the alarm.
 
-To run tTime on another machine, put these next to `tTime.exe` (from Qt's and MinGW's `bin`):
-`QtCore4.dll`, `QtGui4.dll` and the MinGW runtime (`mingwm10.dll` and
-`libgcc_s_dw2-1.dll` for GCC 4.4; `libgcc_s_dw2-1.dll`, `libstdc++-6.dll` and
-`libwinpthread-1.dll` for MinGW-w64), plus the installation above.
+To run a shared build on another machine, put these next to `tTime.exe` (from Qt's and
+MinGW's `bin`): `QtCore4.dll`, `QtGui4.dll`, `libgcc_s_dw2-1.dll`, `libstdc++-6.dll` and
+`libwinpthread-1.dll`, plus the installation above.
 
 ### Static build (one exe, no DLLs)
 
 Qt 4 has no static binaries; build a static Qt once from the source
-(`qt-everywhere-opensource-src-4.7.4.zip`), only the parts tTime uses:
+(`qt-everywhere-opensource-src-4.8.7.zip`), only the parts tTime uses:
 
 ```bat
 configure.exe -static -release -opensource -confirm-license -platform win32-g++ ^
@@ -81,16 +83,12 @@ the MinGW runtime statically, so `tTime.exe` (about 12 MB) needs only Windows' o
 `tTime.ini`, `Resources` and `licenses` it is the whole distribution
 (`tTime-<version>-windows-<arch>-static.zip`).
 
-Built and tested with MinGW-w64 GCC 4.8.2, posix threads, rev3:
+Built and tested with Qt 4.8.7 as released and MinGW-w64 GCC 4.8.2, posix threads, rev3:
 
-| Package | Compiler | Qt source |
-|---------|----------|-----------|
-| `windows-x86-static` | `i686-4.8.2-release-posix-dwarf-rt_v3-rev3` | Qt 4.7.4 as released |
-| `windows-x64-static` | `x86_64-4.8.2-release-posix-seh-rt_v3-rev3` | Qt 4.7.4 with `patches/qt-4.7.4-mingw-x64.patch` |
-
-Qt 4.7 predates 64-bit MinGW support: the patch (one line, as fixed in Qt 4.8) makes QtCore's
-CPU feature detection use GCC's inline assembly instead of the MSVC-only `__cpuid`. Apply it in
-the Qt source directory before building: `patch -p1 < patches/qt-4.7.4-mingw-x64.patch`.
+| Package | Compiler |
+|---------|----------|
+| `windows-x86-static` | `i686-4.8.2-release-posix-dwarf-rt_v3-rev3` (as above) |
+| `windows-x64-static` | `x86_64-4.8.2-release-posix-seh-rt_v3-rev3` (from the mingw-w64 project on SourceForge) |
 
 The version is `VERSION` in `common.pri` (also in `src/ttime.rc`, which puts it into the file
 properties of `tTime.exe`).
@@ -204,7 +202,7 @@ LF line endings, 4-space indentation).
 ## License
 
 tTime is released under the MIT License (see `LICENSE`). Distributions also contain Qt
-(LGPL 2.1 with the Nokia Qt LGPL Exception 1.1), the MinGW runtime and the bundled fonts (SIL
+(LGPL 2.1 with the Digia Qt LGPL Exception 1.1), the MinGW runtime and the bundled fonts (SIL
 Open Font License 1.1); see `THIRD-PARTY-NOTICES.md`. The origin and licence of the icons, the
 tree picture and the alarm sound from the original 2010 project are not recorded; confirm or
 replace them before a public release.

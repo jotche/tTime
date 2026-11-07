@@ -1,6 +1,6 @@
 # Settings shared by the library, the application and the tests.
 
-VERSION = 0.2.2
+VERSION = 0.2.3
 
 QT += core gui
 CONFIG += warn_on release

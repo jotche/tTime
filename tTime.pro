@@ -1,4 +1,4 @@
-# tTime: countdown alarms in the system tray (Qt 4.7).
+# tTime: countdown alarms in the system tray (Qt 4.8).
 #
 #   qmake tTime.pro && mingw32-make            (or from a separate build directory)
 #   mingw32-make check                          runs the unit tests
