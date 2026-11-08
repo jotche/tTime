@@ -3,7 +3,7 @@ name = "ttime"
 version = "1.1.0"
 edition = "2024"
 description = "Countdown alarms (\"tea timer\") that live in the system tray"
-license = "GPL-3.0-or-later"
+license = "MIT"
 publish = false
 
 [[bin]]

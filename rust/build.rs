@@ -23,7 +23,7 @@ fn main() {
             .set("FileDescription", "tTime - countdown alarms in the system tray")
             .set("ProductName", "tTime")
             .set("OriginalFilename", "tTime.exe")
-            .set("LegalCopyright", "GPL-3.0-or-later");
+            .set("LegalCopyright", "MIT License");
         if let Err(error) = res.compile() {
             println!("cargo:warning=could not embed the Windows resources: {error}");
         }

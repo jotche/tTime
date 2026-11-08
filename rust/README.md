@@ -25,6 +25,18 @@ cargo clippy --all-targets
 .\target\release\tTime.exe 10s test
 ```
 
+To build a distribution (like the Qt build's `cmake --install` + `package`):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File rust\scripts\dist.ps1   # -SkipBuild to reuse the last build
+```
+
+It creates `dist\gpui-release\` (`bin	Time.exe`, `bin	Time.ini`, `licenses\`) and
+`dist	Time-<version>-windows-x64-gpui.zip` (about 6 MB). `licenses\` holds tTime's licence, the
+font licences, `THIRD-PARTY-NOTICES.md` and, in `crates\`, the licence of every Rust crate in the
+exe (`CRATES.md` lists them; crates published without licence files are covered by the standard
+texts from `rust/licenses`). The script fails if a crate's licence has no text yet.
+
 The release exe is one file of about 13 MB and needs no DLLs beyond Windows' own. Ship it with
 `tTime.ini` next to it (the build copies `../src/tTime.ini` into `target/<profile>/`). Debug
 builds show a console with log output (`RUST_LOG=info`); release builds are GUI-only.
@@ -55,6 +67,7 @@ the Qt and Rust versions share.
 | `src/lib.rs` + modules | GUI-free core with unit tests: alarm model, alarm syntax, INI settings (QSettings-compatible), themes and Qt-compatible HSL recoloring, bell and tree animation, digit layout, WAV length, window placement and cascade slots, configuration |
 | `src/gui/` | gpui windows (`countdown`, `time_up`, `new_alarm`), `text_input` (single-line field), `style` (panel gradients, buttons), `tray` (tray icons and native menus via `tray-icon`/`muda`), `sound` (`rodio`), `platform` (Win32: hide/show, topmost, window icons, work areas, system move), `manager` (alarm lifecycle) |
 | `build.rs` | embeds the icon and version info, copies `tTime.ini` |
+| `scripts/dist.ps1`, `licenses/`, `THIRD-PARTY-NOTICES.md` | distribution and its licence files |
 
 ## Differences from the Qt version
 
