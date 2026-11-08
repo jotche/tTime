@@ -7,6 +7,15 @@
 
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_WIN
+    // Qt 6.8+ renders text with DirectWrite by default, which roughly doubles the
+    // private memory of this small tray app (about 17 MB instead of 9 MB). FreeType
+    // keeps the variable font axes working. QT_QPA_PLATFORM or -platform still win.
+    if (!qEnvironmentVariableIsSet("QT_QPA_PLATFORM")) {
+        qputenv("QT_QPA_PLATFORM", "windows:fontengine=freetype");
+    }
+#endif
+
     QApplication app(argc, argv);
     QApplication::setApplicationName(QStringLiteral("tTime"));
     QApplication::setOrganizationName(QStringLiteral("tTime"));
