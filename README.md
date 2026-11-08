@@ -6,6 +6,9 @@ up, a sound plays, the bell in the tray and taskbar icon swings and the tree in 
 "Time's Up" window sways in a light breeze until you dismiss it (`animations=off` in
 `tTime.ini` keeps everything still).
 
+> A Rust port using the [gpui](https://crates.io/crates/gpui) UI framework lives in [`rust/`](rust/README.md)
+> (same features, look and `tTime.ini`).
+
 Built with **Qt 6 (community / LGPL)**, **C++20** and **CMake**. Requires Qt 6.7 or newer;
 developed and tested with Qt 6.12.
 
