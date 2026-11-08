@@ -31,8 +31,8 @@ To build a distribution (like the Qt build's `cmake --install` + `package`):
 powershell -ExecutionPolicy Bypass -File rust\scripts\dist.ps1   # -SkipBuild to reuse the last build
 ```
 
-It creates `dist\gpui-release\` (`bin	Time.exe`, `bin	Time.ini`, `licenses\`) and
-`dist	Time-<version>-windows-x64-gpui.zip` (about 6 MB). `licenses\` holds tTime's licence, the
+It creates `dist\gpui-release\` (`bin\tTime.exe`, `bin\tTime.ini`, `licenses\`) and
+`dist\tTime-<version>-windows-x64-gpui.zip` (about 6 MB). `licenses\` holds tTime's licence, the
 font licences, `THIRD-PARTY-NOTICES.md` and, in `crates\`, the licence of every Rust crate in the
 exe (`CRATES.md` lists them; crates published without licence files are covered by the standard
 texts from `rust/licenses`). The script fails if a crate's licence has no text yet.
