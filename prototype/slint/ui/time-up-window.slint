@@ -1,0 +1,121 @@
+import { Button } from "std-widgets.slint";
+import { Theme, Fonts, Assets } from "theme.slint";
+import { Panel, DragArea } from "widgets.slint";
+
+// "Time's up" window: the (swaying) tree, the message and New Alarm / Close.
+export component TimeUpWindow inherits Window {
+    in property <string> message;
+    in property <image> tree;
+    in property <image> window-icon;
+    callback new-alarm();
+    callback dismiss();
+    callback drag-started();
+    callback dragged(length, length);
+    callback drag-ended();
+
+    title: message == "" ? "Time is up" : message;
+    icon: window-icon;
+    no-frame: true;
+    background: transparent;
+    always-on-top: true;
+    width: max(421px, layout.preferred-width);
+    height: max(196px, layout.preferred-height);
+    // For centring the window before it is shown.
+    out property <length> natural-width: self.width;
+    out property <length> natural-height: self.height;
+
+    Panel {
+        radius: 15px;
+
+        DragArea {
+            drag-started => { root.drag-started(); }
+            dragged(dx, dy) => { root.dragged(dx, dy); }
+            drag-ended => { root.drag-ended(); }
+        }
+
+        layout := HorizontalLayout {
+            padding: 11px;
+            spacing: 6px;
+            alignment: stretch;
+
+            VerticalLayout {
+                alignment: start;
+                Image {
+                    source: tree;
+                    width: 157px;
+                    height: 173px;
+                    accessible-role: image;
+                    accessible-label: "A tree";
+                }
+            }
+
+            VerticalLayout {
+                horizontal-stretch: 1;
+                padding-left: 7px;
+                spacing: 6px;
+                // "Time's Up" and the message: margins 15 25 0 10 and 0 25 0 10 in the Qt version.
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-top: 15px;
+                    padding-right: 25px;
+                    Text {
+                        text: "Time's Up";
+                        color: white;
+                        font-family: "Sansation";
+                        font-weight: 400;
+                        font-size: Fonts.title-size;
+                    }
+                }
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 25px;
+                    Text {
+                        text: message;
+                        color: white;
+                        wrap: word-wrap;
+                        font-family: Fonts.message-family;
+                        font-weight: Fonts.message-weight;
+                        font-size: Fonts.time-up-message-size;
+                    }
+                }
+                Rectangle { vertical-stretch: 1; }
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 10px;
+                    padding-right: 8px;
+                    padding-bottom: 2px;
+                    Button {
+                        text: "New Alarm";
+                        min-width: 78px;
+                        clicked => { root.new-alarm(); }
+                    }
+                    Button {
+                        text: "Close";
+                        min-width: 78px;
+                        clicked => { root.dismiss(); }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// The "Time's up" tray icon (a ringing bell); click shows the window.
+export component TimeUpTray inherits SystemTrayIcon {
+    in property <image> tray-icon;
+    in property <string> tray-tooltip;
+    in property <image> close-icon;
+    callback show-window();
+    callback new-alarm();
+    callback dismiss();
+
+    icon: tray-icon;
+    tooltip: tray-tooltip;
+    clicked => { root.show-window(); }
+
+    Menu {
+        MenuItem { title: "New Alarm"; activated => { root.new-alarm(); } }
+        MenuSeparator {}
+        MenuItem { title: "Close"; icon: close-icon; activated => { root.dismiss(); } }
+    }
+}

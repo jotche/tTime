@@ -1,0 +1,78 @@
+import { LineEdit, Button } from "std-widgets.slint";
+import { Assets } from "theme.slint";
+
+// Small input window where the user types e.g. "5m green tea".
+export component NewAlarmWindow inherits Window {
+    in-out property <string> text <=> edit.text;
+    in property <bool> invalid;
+    in property <image> window-icon;
+    callback submit(string);
+    callback edited();
+
+    title: "New alarm";
+    icon: window-icon;
+    min-width: 350px;
+    preferred-width: 350px;
+    forward-focus: edit;
+    // For centring the window before it is shown.
+    out property <length> natural-width: max(350px, layout.preferred-width);
+    out property <length> natural-height: layout.preferred-height;
+
+    layout := VerticalLayout {
+        padding: 9px;
+        spacing: 6px;
+        alignment: start;
+
+        HorizontalLayout {
+            spacing: 6px;
+            Rectangle {
+                horizontal-stretch: 1;
+                min-height: edit.min-height;
+                preferred-height: edit.preferred-height;
+                border-width: invalid ? 1px : 0;
+                border-color: #d9534f;
+                border-radius: 4px;
+                edit := LineEdit {
+                    width: parent.width;
+                    height: parent.height;
+                    placeholder-text: "e.g. 5m green tea";
+                    accessible-description: hint.text;
+                    accepted(value) => { root.submit(value); }
+                    edited => { root.edited(); }
+                }
+                // Clear button (QLineEdit::setClearButtonEnabled)
+                if edit.text != "": TouchArea {
+                    x: parent.width - self.width - 6px;
+                    width: 18px;
+                    height: parent.height;
+                    accessible-role: button;
+                    accessible-label: "Clear";
+                    clicked => {
+                        edit.text = "";
+                        root.edited();
+                        edit.focus();
+                    }
+                    Text {
+                        text: "✕";
+                        color: parent.has-hover ? #202020 : #808080;
+                        font-size: 11px;
+                    }
+                }
+            }
+            Button {
+                text: "Start";
+                min-width: 84px;
+                clicked => { root.submit(edit.text); }
+            }
+        }
+
+        // The usage hint (a tooltip in the Qt version), shown after an invalid entry.
+        hint := Text {
+            visible: invalid;
+            height: invalid ? self.preferred-height : 0;
+            text: "Enter a duration and an optional message, e.g.\n  5m green tea\n  1h 30m meeting\n  90s";
+            color: #b02a26;
+            font-size: 12px;
+        }
+    }
+}

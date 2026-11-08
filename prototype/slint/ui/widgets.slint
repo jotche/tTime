@@ -1,0 +1,159 @@
+import { Theme } from "theme.slint";
+
+// The themed background of the frameless windows (paintPanel() in the Qt version): a
+// top-to-bottom gradient (dark edges, light centre) overlaid with a left-to-right one.
+export component Panel inherits Rectangle {
+    in property <length> radius: 0;
+    // Opacity of the left/right gradient at the edges, the inset band and the light band.
+    in property <float> side-edge-alpha: 150 / 255;
+    in property <float> side-inset-alpha: 100 / 255;
+    in property <float> side-light-alpha: 80 / 255;
+    // Light band of the left/right gradient: centred, or at 35 % (the countdown window).
+    in property <bool> light-band-left: false;
+
+    property <float> v-inset: min(20px / max(root.height, 1px), 0.49);
+    property <float> h-inset: min(20px / max(root.width, 1px), light-band-left ? 0.34 : 0.49);
+    property <color> edge: Theme.dark.with-alpha(side-edge-alpha);
+    property <color> inset: Theme.mid.with-alpha(side-inset-alpha);
+    property <color> band: Theme.light.with-alpha(side-light-alpha);
+
+    Rectangle {
+        border-radius: root.radius;
+        border-width: 1px;
+        border-color: #00000020;
+        background: @linear-gradient(180deg, Theme.dark.with-alpha(235 / 255) 0, Theme.mid.with-alpha(190 / 255) v-inset,
+            Theme.light.with-alpha(150 / 255) 0.5, Theme.mid.with-alpha(190 / 255) 1 - v-inset,
+            Theme.dark.with-alpha(235 / 255) 1);
+    }
+
+    Rectangle {
+        border-radius: root.radius;
+        border-width: 1px;
+        border-color: #DCDCDC64;
+        background: light-band-left
+            ? @linear-gradient(90deg, edge 0, inset h-inset, band 0.35, inset 0.55, edge 1)
+            : @linear-gradient(90deg, edge 0, inset h-inset, band 0.5, inset 1 - h-inset, edge 1);
+    }
+
+    @children
+}
+
+// A flat tool button with an icon (QToolButton with autoRaise in the Qt version):
+// highlighted when hovered, pressed or checked.
+export component ToolButton inherits Rectangle {
+    in property <image> icon;
+    in property <length> icon-size: 16px;
+    in property <string> text; // tooltip and accessible name
+    in property <bool> checkable;
+    in-out property <bool> checked;
+    callback clicked;
+    callback hover-changed(/* hovered */ bool, /* text */ string, /* below */ Point);
+
+    // The Qt version's style sheet: no border normally, 1px padding on the left; the
+    // highlight border is drawn over the icon's edge so the size never changes.
+    width: icon-size + 1px;
+    height: icon-size;
+    accessible-role: button;
+    accessible-label: text;
+    accessible-checkable: checkable;
+    accessible-checked: checked;
+    accessible-action-default => { touch.clicked(); }
+
+    property <bool> highlighted: touch.has-hover || touch.pressed || checked;
+    background: highlighted ? Theme.highlight.with-alpha(150 / 255) : transparent;
+    border-width: highlighted ? 1px : 0;
+    border-color: Theme.highlight-border.with-alpha(220 / 255);
+
+    Image {
+        x: 1px;
+        y: 0;
+        accessible-role: none; // the button carries the name
+        source: icon;
+        width: icon-size;
+        height: icon-size;
+    }
+
+    touch := TouchArea {
+        clicked => {
+            if (checkable) {
+                checked = !checked;
+            }
+            root.clicked();
+        }
+        changed has-hover => {
+            root.hover-changed(self.has-hover, root.text, { x: root.absolute-position.x, y: root.absolute-position.y + root.height + 2px });
+        }
+    }
+}
+
+// A tooltip drawn inside the window (Slint has no tooltip windows): shown when
+// `text` is set, after a short delay, at `position` (kept inside the window).
+export component Tooltip inherits Rectangle {
+    in property <string> text;
+    in property <Point> position;
+    in property <length> window-width;
+    property <bool> due;
+
+    visible: due && text != "";
+    x: max(2px, min(position.x, window-width - self.width - 2px));
+    y: position.y;
+    width: label.preferred-width + 8px;
+    height: label.preferred-height + 4px;
+    background: #ffffffe8;
+    border-width: 1px;
+    border-color: #767676;
+
+    label := Text {
+        text: root.text;
+        font-size: 12px;
+        color: #202020;
+    }
+
+    Timer {
+        interval: 600ms;
+        running: root.text != "" && !root.due;
+        triggered => { root.due = true; }
+    }
+    changed text => {
+        if (text == "") {
+            due = false;
+        }
+    }
+}
+
+// Drags a frameless window by its background (the C++ side moves it: drag-started,
+// dragged with the distance from the press, drag-ended). With Ctrl held, dragging
+// resizes instead (`resize-dragged` with the distance since the press).
+export component DragArea inherits TouchArea {
+    callback drag-started();
+    callback dragged(length, length);
+    callback drag-ended();
+    callback resize-started();
+    callback resize-dragged(length);
+    property <bool> resizing;
+
+    pointer-event(event) => {
+        if (event.button != PointerEventButton.left) {
+            return;
+        }
+        if (event.kind == PointerEventKind.down) {
+            resizing = event.modifiers.control;
+            if (resizing) {
+                root.resize-started();
+            } else {
+                root.drag-started();
+            }
+        } else if (event.kind == PointerEventKind.up && !resizing) {
+            root.drag-ended();
+        }
+    }
+    moved => {
+        if (self.pressed) {
+            if (resizing) {
+                root.resize-dragged(self.mouse-x - self.pressed-x);
+            } else {
+                root.dragged(self.mouse-x - self.pressed-x, self.mouse-y - self.pressed-y);
+            }
+        }
+    }
+}

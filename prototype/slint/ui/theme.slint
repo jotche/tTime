@@ -1,0 +1,44 @@
+// Theme colors, fonts and pictures shared by tTime's windows. The C++ side sets the
+// colors and fonts from tTime.ini (see src/ui-setup.cpp); the defaults here are the
+// blue theme and the default fonts.
+
+import "../../../src/Resources/fonts/Oxanium-Variable.ttf";
+import "../../../src/Resources/fonts/Jura-Variable.ttf";
+import "../../../src/Resources/fonts/Doto-Variable.ttf";
+import "../../../src/Resources/fonts/Outfit-Variable.ttf";
+import "../../../src/Resources/fonts/Sansation-Regular.ttf";
+import "../../../src/Resources/fonts/Sansation-Light.ttf";
+
+export global Theme {
+    in property <color> dark: #03427C;
+    in property <color> mid: #4586BA;
+    in property <color> light: #A4D4EE;
+    in property <color> highlight: #8DB2CE;
+    in property <color> highlight-border: #BAD1E1;
+}
+
+export global Fonts {
+    in property <string> countdown-family: "Oxanium";
+    in property <int> countdown-weight: 400;
+    in property <length> countdown-size: 24px;
+    in property <string> message-family: "Outfit";
+    in property <int> message-weight: 300;
+    in property <length> message-size: 17.33px;
+    in property <length> time-up-message-size: 17.33px;
+    // "Time's Up" title (Sansation 20 pt in the Qt version)
+    in property <length> title-size: 26.67px;
+}
+
+// Pictures compiled into the program. The C++ side reads the icon and the tree
+// from here to recolor and animate them.
+export global Assets {
+    out property <image> alarm-icon: @image-url("alarm.png");
+    out property <image> tree: @image-url("../../../src/Resources/images/tree02.png");
+    out property <image> play: @image-url("../../../src/Resources/icons01/play_matched_16.png");
+    out property <image> pause: @image-url("../../../src/Resources/icons01/video_pause_16.png");
+    out property <image> stop: @image-url("../../../src/Resources/icons01/video_stop_16.png");
+    out property <image> restart: @image-url("../../../src/Resources/icons01/reload_16.png");
+    out property <image> anchor: @image-url("../../../src/Resources/icons01/flag1_16.png");
+    out property <image> down: @image-url("../../../src/Resources/icons01/arrow_down_16.png");
+    out property <image> exit: @image-url("../../../src/Resources/icons01/delete_16.png");
+}

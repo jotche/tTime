@@ -1,0 +1,227 @@
+import { Theme, Fonts, Assets } from "theme.slint";
+import { Panel, ToolButton, Tooltip, DragArea } from "widgets.slint";
+
+// One character of the countdown; digits get equal-width slots.
+export struct Glyph {
+    ch: string,
+    digit: bool,
+}
+
+// The countdown time ("hh:mm:ss"): every digit is centred in a slot as wide as the
+// widest digit, so the time does not shift sideways as it changes, with letter
+// spacing of 25 % of each slot (QFont PercentageSpacing 125 in the Qt version).
+// The font's descent is left out, since digits never use it.
+component CountdownText inherits Rectangle {
+    in property <[Glyph]> glyphs;
+
+    property <length> slot: max(d0.preferred-width, d1.preferred-width, d2.preferred-width, d3.preferred-width,
+        d4.preferred-width, d5.preferred-width, d6.preferred-width, d7.preferred-width,
+        d8.preferred-width, d9.preferred-width);
+
+    accessible-role: text;
+    height: d0.font-metrics.ascent;
+
+    // Hidden digits, measured for the slot width.
+    d0 := Text { text: "0"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d1 := Text { text: "1"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d2 := Text { text: "2"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d3 := Text { text: "3"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d4 := Text { text: "4"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d5 := Text { text: "5"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d6 := Text { text: "6"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d7 := Text { text: "7"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d8 := Text { text: "8"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+    d9 := Text { text: "9"; visible: false; font-family: Fonts.countdown-family; font-weight: Fonts.countdown-weight; font-size: Fonts.countdown-size; }
+
+    HorizontalLayout {
+        alignment: start;
+        spacing: 0;
+        for g[i] in glyphs: Rectangle {
+            property <length> cell: g.digit ? slot : t.preferred-width;
+            width: cell + (i < glyphs.length - 1 ? cell * 0.25 : 0);
+            t := Text {
+                x: (cell - self.preferred-width) / 2;
+                y: 0;
+                accessible-role: none; // read as a whole through the CountdownText
+                text: g.ch;
+                color: white;
+                font-family: Fonts.countdown-family;
+                font-weight: Fonts.countdown-weight;
+                font-size: Fonts.countdown-size;
+            }
+        }
+    }
+}
+
+// Frameless countdown window. Drag it by its background; Ctrl+drag changes its width
+// (the height always follows the content).
+export component CountdownWindow inherits Window {
+    in property <[Glyph]> glyphs;
+    in property <string> time-text; // for screen readers
+    in property <string> message;
+    in property <bool> running;
+    in property <image> window-icon;
+    in-out property <length> window-width: 200px;
+    in-out property <bool> on-top: false;
+    out property <length> smallest-width: 200px;
+
+    callback play-pause();
+    callback stop();
+    callback restart();
+    callback minimize();
+    callback quit();
+    callback new-alarm();
+    callback drag-started();
+    callback dragged(length, length);
+    callback drag-ended();
+
+    title: message == "" ? "tTime" : message;
+    icon: window-icon;
+    no-frame: true;
+    background: transparent;
+    always-on-top: on-top;
+    width: window-width;
+    height: content.preferred-height;
+
+    property <string> tip;
+    property <Point> tip-position;
+    property <length> resize-start-width;
+
+    Panel {
+        side-edge-alpha: 200 / 255;
+        side-inset-alpha: 150 / 255;
+        side-light-alpha: 80 / 255;
+        light-band-left: true;
+
+        ContextMenuArea {
+            Menu {
+                MenuItem { title: "Restart"; icon: Assets.restart; activated => { root.restart(); } }
+                MenuItem { title: "Minimize"; icon: Assets.down; activated => { root.minimize(); } }
+                MenuItem { title: "Restore"; enabled: false; }
+                MenuItem { title: "New Alarm"; activated => { root.new-alarm(); } }
+                MenuItem { title: "Quit"; icon: Assets.exit; activated => { root.quit(); } }
+            }
+
+            DragArea {
+                drag-started => { root.drag-started(); }
+                dragged(dx, dy) => { root.dragged(dx, dy); }
+                drag-ended => { root.drag-ended(); }
+                resize-started => { root.resize-start-width = root.width; }
+                resize-dragged(dx) => { root.window-width = max(root.smallest-width, root.resize-start-width + dx); }
+            }
+        }
+
+        // window-content: 12px padding top and bottom, 8px left and right; 8px between
+        // the action row and the content.
+        content := VerticalLayout {
+            padding-left: 8px;
+            padding-right: 8px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            spacing: 8px;
+
+            HorizontalLayout {
+                alignment: start;
+                spacing: 0;
+                ToolButton {
+                    icon: running ? Assets.pause : Assets.play;
+                    icon-size: 24px;
+                    text: running ? "Pause" : "Start";
+                    clicked => { root.play-pause(); }
+                    hover-changed(on, text, at) => { root.tip = on ? text : ""; root.tip-position = at; }
+                }
+                ToolButton {
+                    icon: Assets.stop;
+                    icon-size: 24px;
+                    text: "Stop";
+                    clicked => { root.stop(); }
+                    hover-changed(on, text, at) => { root.tip = on ? text : ""; root.tip-position = at; }
+                }
+                ToolButton {
+                    icon: Assets.restart;
+                    icon-size: 24px;
+                    text: "Restart";
+                    clicked => { root.restart(); }
+                    hover-changed(on, text, at) => { root.tip = on ? text : ""; root.tip-position = at; }
+                }
+            }
+
+            // content-container: countdown and message, 4px apart, indented 4px.
+            VerticalLayout {
+                padding-left: 4px;
+                spacing: 4px;
+                CountdownText {
+                    glyphs: root.glyphs;
+                    accessible-label: root.time-text;
+                }
+                Text {
+                    text: message;
+                    color: #F0F0F0;
+                    wrap: word-wrap;
+                    font-family: Fonts.message-family;
+                    font-weight: Fonts.message-weight;
+                    font-size: Fonts.message-size;
+                }
+            }
+        }
+
+        // Window actions, pinned 8px from the top-right corner over the padding.
+        HorizontalLayout {
+            x: parent.width - self.preferred-width - 8px;
+            y: 8px;
+            width: self.preferred-width;
+            height: self.preferred-height;
+            spacing: 0;
+            ToolButton {
+                icon: Assets.anchor;
+                text: "Always on top";
+                checkable: true;
+                checked <=> root.on-top;
+                hover-changed(on, text, at) => { root.tip = on ? text : ""; root.tip-position = at; }
+            }
+            ToolButton {
+                icon: Assets.down;
+                text: "Minimize";
+                clicked => { root.minimize(); }
+                hover-changed(on, text, at) => { root.tip = on ? text : ""; root.tip-position = at; }
+            }
+            ToolButton {
+                icon: Assets.exit;
+                text: "Quit";
+                clicked => { root.quit(); }
+                hover-changed(on, text, at) => { root.tip = on ? text : ""; root.tip-position = at; }
+            }
+        }
+
+        Tooltip {
+            text: root.tip;
+            position: root.tip-position;
+            window-width: root.width;
+        }
+    }
+}
+
+// The countdown window's tray icon: fills up as time passes; click shows or hides
+// the window.
+export component CountdownTray inherits SystemTrayIcon {
+    in property <image> tray-icon;
+    in property <string> tray-tooltip;
+    in property <bool> window-visible: true;
+    callback toggle-window();
+    callback minimize();
+    callback restore();
+    callback new-alarm();
+    callback quit();
+
+    icon: tray-icon;
+    tooltip: tray-tooltip;
+    clicked => { root.toggle-window(); }
+
+    Menu {
+        MenuItem { title: "Minimize"; icon: Assets.down; enabled: window-visible; activated => { root.minimize(); } }
+        MenuItem { title: "Restore"; enabled: !window-visible; activated => { root.restore(); } }
+        MenuSeparator {}
+        MenuItem { title: "New Alarm"; activated => { root.new-alarm(); } }
+        MenuItem { title: "Quit"; icon: Assets.exit; activated => { root.quit(); } }
+    }
+}
