@@ -35,11 +35,12 @@ Qt modules used: `Core`, `Gui`, `Widgets`, `Multimedia` (alarm sound), and `Test
 
 ## Build, test, run
 
-There are three presets:
+There are four presets:
 
 | Preset | Qt | Use |
 |--------|----|-----|
 | `clang64-release-static` | static (`qt6-static`) | **the release build**: one `tTime.exe`, no DLLs |
+| `clang64-release-static-min` | trimmed static, built locally | smaller one-exe build (see below) |
 | `clang64-release` | shared | development; deploys ~125 files (~200 MB) |
 | `clang64-debug` | shared | debugging |
 
@@ -66,6 +67,22 @@ the ZIP runs on any Windows 10/11 x64 machine. It plays the alarm through Qt's n
 media backend. The version comes from `project(tTime VERSION ...)` in `CMakeLists.txt` and is
 also shown in the file properties of `tTime.exe`. After committing a release, tag it:
 `git tag -a v1.0.0 -m "tTime 1.0.0"`.
+
+**Trimmed static build** (`clang64-release-static-min`): `scripts\build-static-qt-min.ps1`
+builds a static Qt 6.12 from source with the MSYS2 CLANG64 toolchain, leaving out what tTime
+does not use (Network, SQL, XML, D-Bus, PrintSupport, OpenGL, Vulkan, OpenSSL, ICU, JPEG/GIF,
+FFmpeg, ...). It needs `MSYS2_ROOT` and `QT_ROOT` (e.g. `setx QT_ROOT C:\Qt`), installs Qt to
+`%QT_ROOT%\6.12.0\clang64_static_min` and takes about 20-40 minutes. The resulting `tTime.exe`
+is about 21 MB instead of 30 MB; memory use is about the same (the Windows platform layer
+dominates it).
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\build-static-qt-min.ps1
+cmake --preset clang64-release-static-min
+cmake --build --preset clang64-release-static-min
+ctest --preset clang64-release-static-min
+cmake --install build/clang64-release-static-min   # -> dist/clang64-release-static-min
+```
 
 **Shared builds** (`clang64-release`, `clang64-debug`) are for development. MSYS2's shared
 Qt Multimedia only has the FFmpeg backend, so `cmake --install` deploys Qt, FFmpeg and their

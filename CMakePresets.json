@@ -52,6 +52,24 @@
       }
     },
     {
+      "name": "clang64-release-static-min",
+      "displayName": "MSYS2 CLANG64 - Release, trimmed static Qt (needs MSYS2_ROOT, QT_ROOT and scripts/build-static-qt-min.ps1)",
+      "inherits": "windows-clang64",
+      "condition": {
+        "type": "allOf",
+        "conditions": [
+          { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+          { "type": "notEquals", "lhs": "$penv{MSYS2_ROOT}", "rhs": "" },
+          { "type": "notEquals", "lhs": "$penv{QT_ROOT}", "rhs": "" }
+        ]
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_PREFIX_PATH": "$penv{QT_ROOT}/6.12.0/clang64_static_min;$penv{MSYS2_ROOT}/clang64",
+        "TTIME_STATIC": "ON"
+      }
+    },
+    {
       "name": "default",
       "displayName": "Qt found via CMAKE_PREFIX_PATH / PATH (any platform)",
       "inherits": "base",
@@ -62,12 +80,14 @@
     { "name": "clang64-debug", "configurePreset": "clang64-debug" },
     { "name": "clang64-release", "configurePreset": "clang64-release" },
     { "name": "clang64-release-static", "configurePreset": "clang64-release-static" },
+    { "name": "clang64-release-static-min", "configurePreset": "clang64-release-static-min" },
     { "name": "default", "configurePreset": "default" }
   ],
   "testPresets": [
     { "name": "clang64-debug", "configurePreset": "clang64-debug", "output": { "outputOnFailure": true } },
     { "name": "clang64-release", "configurePreset": "clang64-release", "output": { "outputOnFailure": true } },
     { "name": "clang64-release-static", "configurePreset": "clang64-release-static", "output": { "outputOnFailure": true } },
+    { "name": "clang64-release-static-min", "configurePreset": "clang64-release-static-min", "output": { "outputOnFailure": true } },
     { "name": "default", "configurePreset": "default", "output": { "outputOnFailure": true } }
   ]
 }
