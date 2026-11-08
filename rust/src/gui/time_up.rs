@@ -96,6 +96,8 @@ impl TimeUpWindow {
     fn new(id: u64, message: String, shared: Rc<Shared>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let hwnd = platform::native_handle(window);
         platform::square_corners(hwnd); // tTime paints its own rounded corners
+        // Outside of this update: it makes gpui handle resize messages synchronously.
+        cx.foreground_executor().spawn(async move { platform::make_frameless(hwnd) }).detach();
         let config = &shared.config;
         let theme = &config.theme;
         let animations = config.animations;

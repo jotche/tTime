@@ -63,6 +63,7 @@ pub struct CountdownWindow {
     on_top: bool,
     visible: bool,
     closed: bool,
+    frameless: bool, // the native frame is gone; the window may be fitted to its content
 
     tray_key: String,
     tray: Option<TrayIcon>,
@@ -122,6 +123,17 @@ impl CountdownWindow {
     ) -> Self {
         let hwnd = platform::native_handle(window);
         platform::square_corners(hwnd);
+        // Outside of this update: it makes gpui handle resize messages synchronously.
+        // The size is fitted to the content only afterwards (a resize queued before would
+        // still include the old frame).
+        cx.spawn(async move |this, cx| {
+            platform::make_frameless(hwnd);
+            let _ = this.update(cx, |view, cx| {
+                view.frameless = true;
+                cx.notify();
+            });
+        })
+        .detach();
         let theme = &shared.config.theme;
         let app_image = themed_app_image(theme);
         let tray_key = tray::new_key("alarm");
@@ -199,6 +211,7 @@ impl CountdownWindow {
             on_top: false,
             visible: true,
             closed: false,
+            frameless: !cfg!(windows),
             tray_key,
             tray,
             _tray_menu: tray_menu,
@@ -459,10 +472,11 @@ impl Render for CountdownWindow {
         let viewport = window.viewport_size();
         let width = viewport.width.max(px(MINIMUM_WIDTH));
         let height = self.content_height(width, &metrics, window);
-        if (viewport.height - height).abs() > px(0.5) || viewport.width < px(MINIMUM_WIDTH) {
+        if !self.frameless {
+            // Not fitted yet (see make_frameless); the next render does it.
+        } else if (viewport.height - height).abs() > px(0.5) || viewport.width < px(MINIMUM_WIDTH) {
             window.resize(size(width, height));
-        }
-        if self.placed_size.is_none() {
+        } else if self.placed_size.is_none() {
             // Remember where the window was actually put (the system may adjust
             // the requested origin slightly) and its fitted size.
             let origin = window.bounds().origin;

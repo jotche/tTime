@@ -77,6 +77,72 @@ mod imp {
         }
     }
 
+    /// Makes a gpui window without a title bar truly frameless.
+    ///
+    /// gpui keeps a non-client frame around such windows on Windows 11: 1 px at
+    /// the top, which the system paints as a white line, and invisible resize
+    /// borders on the other sides. A subclass removes the whole non-client area
+    /// (and the top-edge resize zone gpui's hit test adds), the window is then
+    /// shrunk onto its old client rectangle, and gpui is made to re-measure its
+    /// border offsets (it does so on WM_SETTINGCHANGE).
+    ///
+    /// This sends messages that gpui handles synchronously, so it must run outside
+    /// of any gpui update (e.g. from a spawned task).
+    pub fn make_frameless(handle: isize) {
+        use windows::Win32::UI::Shell::SetWindowSubclass;
+        if handle == 0 {
+            return;
+        }
+        let h = hwnd(handle);
+        unsafe {
+            let mut window = RECT::default();
+            let mut client = RECT::default();
+            if GetWindowRect(h, &mut window).is_err() || GetClientRect(h, &mut client).is_err() {
+                return;
+            }
+            if !SetWindowSubclass(h, Some(frameless_proc), FRAMELESS_SUBCLASS_ID, 0).as_bool() {
+                return;
+            }
+            // gpui placed the window rect around the requested bounds with half of the
+            // frame on each side; undo that to get exactly the requested bounds.
+            let (width, height) = (client.right - client.left, client.bottom - client.top);
+            let x = window.left + ((window.right - window.left) - width) / 2;
+            let y = window.top + ((window.bottom - window.top) - height) / 2;
+            let _ = SetWindowPos(
+                h,
+                None,
+                x,
+                y,
+                width,
+                height,
+                SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_NOACTIVATE,
+            );
+            // gpui re-reads its border offsets here (104 = SPI_SETWHEELSCROLLLINES: harmless).
+            SendMessageW(h, WM_SETTINGCHANGE, Some(WPARAM(104)), Some(LPARAM(0)));
+        }
+    }
+
+    const FRAMELESS_SUBCLASS_ID: usize = 0x7454696d; // "tTim"
+
+    unsafe extern "system" fn frameless_proc(
+        handle: HWND,
+        msg: u32,
+        wparam: WPARAM,
+        lparam: LPARAM,
+        _id: usize,
+        _data: usize,
+    ) -> windows::Win32::Foundation::LRESULT {
+        use windows::Win32::Foundation::LRESULT;
+        use windows::Win32::UI::Shell::DefSubclassProc;
+        match msg {
+            // The client area is the whole window.
+            WM_NCCALCSIZE if wparam.0 != 0 => LRESULT(0),
+            // No resize edges; moving is started by the window itself.
+            WM_NCHITTEST => LRESULT(HTCLIENT as isize),
+            _ => unsafe { DefSubclassProc(handle, msg, wparam, lparam) },
+        }
+    }
+
     /// Turns off Windows 11's automatic rounding of the window corners (the
     /// frameless windows paint their own shape).
     pub fn square_corners(handle: isize) {
@@ -262,6 +328,7 @@ mod imp {
     pub fn set_topmost(_handle: isize, _on_top: bool) {}
     pub fn start_system_move(_handle: isize) {}
     pub fn square_corners(_handle: isize) {}
+    pub fn make_frameless(_handle: isize) {}
     pub fn set_window_icon(_handle: isize, _image: &RgbaImage) {}
     pub fn forget_window(_handle: isize) {}
     pub fn available_areas() -> Vec<Rect> {
